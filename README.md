@@ -45,9 +45,6 @@ The script by default overwrites older files with newer files.
 Do not move the source Dynamo graphs, or update won't work with them later.
 ```
 
-
-
-
 ## Development
 
 ### Installation
@@ -70,3 +67,9 @@ py -m venv .venv
 py -m pip install -e .
 ```
 
+Build:
+
+```shell
+pip install -e .[build]
+pyinstaller dyn2py.spec
+```

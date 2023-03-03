@@ -13,6 +13,11 @@ classifiers = []
 
 dependencies = ["importlib_metadata", "pathvalidate", "simplejson"]
 
+[project.optional-dependencies]
+build = [
+  "pyinstaller"
+]
+
 [project.urls]
 homepage = "https://github.com/infeeeee/dyn2py"
 documentation = "https://github.com/infeeeee/dyn2py"

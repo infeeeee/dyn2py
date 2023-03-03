@@ -2,3 +2,5 @@
 example
 __pycache__
 dyn2py.egg-info
+build
+dist
