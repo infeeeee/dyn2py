@@ -17,7 +17,7 @@ Extract python nodes from Dynamo graphs
 
 ## Usage
 
-```shell
+```
 > dyn2py --help
 usage: dyn2py [-h] [-l LOGLEVEL] [-n] [-F] [-b] [-f {py,dyn}] [-u] [-p path/to/folder] source
 
@@ -51,7 +51,7 @@ Do not move the source Dynamo graphs, or update won't work with them later.
 
 Requirements: git, pip
 
-```shell
+```
 git clone https://github.com/infeeeee/dyn2py
 cd dyn2py
 py -m pip install -e .
@@ -59,7 +59,7 @@ py -m pip install -e .
 
 With venv:
 
-```shell
+```
 git clone https://github.com/infeeeee/dyn2py
 cd dyn2py
 py -m venv .venv
