@@ -1,0 +1,28 @@
+[project]
+name = "dyn2py"
+version = "0.0.1"
+description = "Extract python code from Dynamo graphs"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "COPYING" }
+
+
+authors = [{ name = "infeeeee", email = "gyetpet@mailbox.org" }]
+maintainers = [{ name = "infeeeee", email = "gyetpet@mailbox.org" }]
+classifiers = []
+
+dependencies = ["importlib_metadata", "pathvalidate", "simplejson"]
+
+[project.urls]
+homepage = "https://github.com/infeeeee/dyn2py"
+documentation = "https://github.com/infeeeee/dyn2py"
+repository = "https://github.com/infeeeee/dyn2py"
+changelog = "https://github.com/infeeeee/dyn2py/releases"
+
+
+[project.scripts]
+dyn2py = "dyn2py:run"
+
+
+[build-system]
+requires = ["setuptools", "wheel"]
