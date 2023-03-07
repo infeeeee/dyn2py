@@ -18,7 +18,7 @@ build = ["pyinstaller"]
 doc = ["pdoc"]
 
 [project.urls]
-homepage = "https://github.com/infeeeee/dyn2py"
+homepage = "https://infeeeee.github.io/dyn2py"
 documentation = "https://github.com/infeeeee/dyn2py"
 repository = "https://github.com/infeeeee/dyn2py"
 changelog = "https://github.com/infeeeee/dyn2py/releases"

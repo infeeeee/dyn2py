@@ -54,7 +54,7 @@ Do not move the source Dynamo graphs, or update won't work with them later.
 
 ### As a python module
 
-API documentation available here: *TODO*
+Full API documentation available here: https://infeeeee.github.io/dyn2py
 
 Most basic example to extract all nodes next to a dynamo file:
 
