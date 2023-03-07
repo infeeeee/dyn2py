@@ -1,6 +1,6 @@
 [project]
 name = "dyn2py"
-version = "0.0.1"
+version = "0.1.0"
 description = "Extract python code from Dynamo graphs"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -14,9 +14,8 @@ classifiers = []
 dependencies = ["importlib_metadata", "pathvalidate", "simplejson"]
 
 [project.optional-dependencies]
-build = [
-  "pyinstaller"
-]
+build = ["pyinstaller"]
+doc = ["pdoc"]
 
 [project.urls]
 homepage = "https://github.com/infeeeee/dyn2py"

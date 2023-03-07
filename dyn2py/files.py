@@ -3,44 +3,53 @@ import hashlib
 import pathlib
 import textwrap
 import logging
-import argparse
 from datetime import datetime
 from decimal import Decimal
 from pathvalidate import sanitize_filename
 from importlib_metadata import metadata
+
+from dyn2py.exceptions import *
+from dyn2py.options import Options
 
 
 METADATA = metadata("dyn2py")
 HEADER_SEPARATOR = "*" * 60
 
 
-class DynamoFileException(Exception):
-    pass
-
-
-class PythonNodeNotFoundException(Exception):
-    pass
-
-
-class PythonFileException(Exception):
-    pass
-
-
 class File():
     """Base class for managing files"""
 
-    def __init__(self, filepath: pathlib.Path) -> None:
+    def __init__(self, filepath: pathlib.Path | str) -> None:
+        """Generate a file object. 
 
-        self.filepath = filepath
-        # basename: only the name of the file, without extension
-        self.basename = filepath.stem
-        # dirpath: containing folder
-        self.dirpath = filepath.parent
-        self.realpath = filepath.resolve()
-        self.mtime = False
-        self.mtimeiso = False
-        self.exists = self.filepath.exists()
-        self.extension = self.filepath.suffix
+        Args:
+            filepath (pathlib.Path | str): Path to the python file or Dynamo graph
+        """
+
+        self.filepath: pathlib.Path
+        """Path to the file as a pathlib.Path object"""
+        if isinstance(filepath, str):
+            self.filepath = pathlib.Path(filepath)
+        else:
+            self.filepath = filepath
+
+        self.basename: str = self.filepath.stem
+        """Only the name of the file, without path or extension"""
+        self.dirpath: pathlib.Path = self.filepath.parent
+        """Containing folder"""
+        self.realpath: pathlib.Path = self.filepath.resolve()
+        """Full resolved path to the file"""
+        self.mtime: float = 0.0
+        """Modification time. 0 if does not exist"""
+        self.mtimeiso: str = ""
+        """Modification time as an iso formatted string"""
+
+        self.exists: bool = self.filepath.exists()
+        """If the file exists"""
+        self.extension: str = self.filepath.suffix
+        """File extension as string"""
+        self.modified: bool = False
+        """If an existing file was modified"""
 
         if self.exists:
             logging.debug(f"File exists: {self.filepath}")
@@ -51,7 +60,7 @@ class File():
         """Check if this file is newer than the other file
 
         Args:
-            other_file (File): The other file
+            other_file(File): The other file
 
         Returns:
             bool: True if this file is newer or the other doesn't exist
@@ -79,15 +88,20 @@ class File():
         """
         return bool(self.extension == ".py")
 
-    def write(self, args: argparse.Namespace) -> None:
+    def write(self, options: Options) -> None:
         """Prepare writing file to the disk:
             create backup, process dry-run, call filetype specific write_file() methods
 
         Args:
-            args (argparse.Namespace): parsed arguments
+            options(Options): Run options.
         """
+
+        if not self.modified:
+            logging.debug("File not modified, not saving")
+            return
+
         # Create backup:
-        if not args.dry_run and self.filepath.exists() and args.backup:
+        if not options.dry_run and self.filepath.exists() and options.backup:
             backup_filename = sanitize_filename(
                 f"{self.basename}_{self.mtimeiso}{self.extension}")
             backup_path = self.dirpath.joinpath(backup_filename)
@@ -95,7 +109,7 @@ class File():
             self.filepath.rename(backup_path)
 
         # Call filetype specific methods:
-        if args.dry_run:
+        if options.dry_run:
             logging.info(
                 f"Should write file, but it's a dry-run: {self.filepath}")
         else:
@@ -108,13 +122,27 @@ class File():
 
 
 class DynamoFile(File):
+    """A Dynamo file, subclass of File()"""
 
-    def extract_python(self, args: argparse.Namespace) -> None:
+    full_dict: dict
+    """The contents of the Dynamo file, as dict."""
+    uuid: str
+    """The uuid of the graph"""
+    name: str
+    """The name of the graph, read from the file. Not the name of the file"""
+
+    open_files: set["DynamoFile"] = set()
+    """A set of open Dynamo files, before saving"""
+
+    def extract_python(self, options: Options | None = None) -> None:
         """Extract and write python files
 
         Args:
-            args (argparse.Namespace): parsed arguments
+            options(Options | None, optional): Run options. Defaults to None.
         """
+
+        if not options:
+            options = Options()
 
         logging.info(f"Extracting from file: {self.filepath}")
 
@@ -123,8 +151,8 @@ class DynamoFile(File):
 
             # Go through nodes in the file:
             for python_node in self.get_python_nodes():
-                if args.python_folder:
-                    python_file_path = args.python_folder.joinpath(
+                if options.python_folder:
+                    python_file_path = options.python_folder.joinpath(
                         python_node.filename)
                 else:
                     python_file_path = python_node.filepath
@@ -133,12 +161,12 @@ class DynamoFile(File):
                 python_file.generate_text(
                     dynamo_file=self, python_node=python_node)
 
-                if python_file.is_newer(self) and not args.force:
+                if python_file.is_newer(self) and not options.force:
                     logging.info(
-                        f"Python file is newer, skipping: {python_file.filepath}")
+                        f"Existing file is newer, skipping: {python_file.filepath}")
                     continue
 
-                python_file.write(args)
+                python_file.write(options)
 
         except DynamoFileException as e:
             logging.warn(e)
@@ -150,13 +178,16 @@ class DynamoFile(File):
 
     def read(self) -> None:
         """Read Dynamo graph to parameters"""
-        logging.debug(f"Reading file: {self.filepath}")
+        # Only read if it's not already open:
+        if not self in self.open_files:
 
-        with open(self.filepath, "r", encoding="utf-8") as input_json:
-            self.full_dict = json.load(input_json,
-                                       use_decimal=True)
-            self.uuid = self.full_dict["Uuid"]
-            self.name = self.full_dict["Name"]
+            logging.debug(f"Reading file: {self.filepath}")
+            with open(self.filepath, "r", encoding="utf-8") as input_json:
+                self.full_dict = json.load(input_json,
+                                           use_decimal=True)
+                self.uuid = self.full_dict["Uuid"]
+                self.name = self.full_dict["Name"]
+                self.open_files.add(self)
 
     def get_python_nodes(self) -> list["PythonNode"]:
         """Get python nodes from the Dynamo graph
@@ -187,7 +218,7 @@ class DynamoFile(File):
         """Get a PythonNode object from this Dynamo graph, by its id
 
         Args:
-            node_id (str): The id of the python node as string
+            node_id(str): The id of the python node as string
 
         Returns:
             PythonNode: The PythonNode with the given id
@@ -208,7 +239,7 @@ class DynamoFile(File):
         """Update the code of a PythonNode in this file
 
         Args:
-            python_node (PythonNode): The new node data
+            python_node(PythonNode): The new node data
         """
         node_dict = next((
             n for n in self.full_dict["Nodes"] if n["Id"] == python_node.id
@@ -217,27 +248,79 @@ class DynamoFile(File):
             raise PythonNodeNotFoundException()
         else:
             node_dict["Code"] = python_node.code
+            self.modified = True
 
     def write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
         with open(self.filepath, "w", encoding="utf-8") as output_file:
             json.dump(self.full_dict, output_file, indent=2,  use_decimal=True)
 
+    def get_related_python_files(self, options: Options | None = None) -> list["PythonFile"]:
+        """Get python files exported from this Dynamo file
+
+        Returns:
+            list[PythonFile]: A list of PythonFile objects
+        """
+        if not options:
+            options = Options()
+
+        self.read()
+
+        # Find the folder of the python files
+        if options.python_folder:
+            python_folder = options.python_folder
+        else:
+            python_folder = self.dirpath
+
+        python_files_in_folder = [PythonFile(f) for f in python_folder.iterdir()
+                                  if File(f).is_python_file()]
+
+        [p.read() for p in python_files_in_folder]
+        related_python_files = [
+            p for p in python_files_in_folder if p.get_source_dynamo_file().uuid == self.uuid]
+
+        return related_python_files
+
+    @staticmethod
+    def get_open_file_by_uuid(uuid: str) -> "DynamoFile | None":
+        """Get an open Dynamo graph by its uuid
+
+        Args:
+            uuid(str): Uuid of the file
+        Returns:
+            DynamoFile: The file. None if not found
+        """
+        f = next((d for d in DynamoFile.open_files if d.uuid == uuid), None)
+        if f:
+            logging.debug(f"Found open file {f.uuid}")
+        return f
+
 
 class PythonFile(File):
+    """A Python file, subclass of File()"""
+
+    code: str
+    """The python code as a string"""
+    header_data: dict
+    """Parsed dict from the header of a python file"""
+    text: str
+    """Full contents of the file before writing"""
+
+    open_files: set["PythonFile"] = set()
+    """A set of open Python files"""
 
     def generate_text(self, dynamo_file: DynamoFile, python_node: "PythonNode") -> None:
         """Generate full text to write with header
 
         Args:
-            dynamo_file (DynamoFile): The source dynamo file
-            python_node (PythonNode): The python node to write
+            dynamo_file(DynamoFile): The source dynamo file
+            python_node(PythonNode): The python node to write
         """
 
         header_notice = """\
-                This file was generated with dyn2py from a Dynamo graph.
-                Do not edit this section, if you want to update the Dynamo graph!\
-                """
+            This file was generated with dyn2py from a Dynamo graph.
+            Do not edit this section, if you want to update the Dynamo graph!\
+            """
 
         self.header_data = {
             "dyn2py_version": METADATA["Version"],
@@ -265,42 +348,27 @@ class PythonFile(File):
             python_node.code
         ])
 
-    def update_dynamo(self, args: argparse.Namespace) -> None:
+        self.modified = True
+
+    def update_dynamo(self, options: Options | None = None) -> None:
         """Update a the source Dynamo graph from this python script
 
         Args:
-            args (argparse.Namespace): parsed arguments
+            options (Options | None, optional): Run options. Defaults to None.
         """
+
+        if not options:
+            options = Options()
+
         self.read()
 
-        dynamo_file_storage = DynamoFileStorage()
-
-        # Update mode, check if needed:
-        if args.update:
-            if not dynamo_file_storage.is_uuid_on_update_list(self.header_data["dyn_uuid"]):
-                logging.info(
-                    "Dynamo graph of this script shouldn't be updated")
-                return
-
         # Check if it was already opened:
-        logging.debug(f"Open files: {dynamo_file_storage.open_files}")
-        dynamo_file = dynamo_file_storage.get_open_file_by_uuid(
+        dynamo_file = DynamoFile.get_open_file_by_uuid(
             self.header_data["dyn_uuid"])
 
         # Open and read if it's the first time:
         if not dynamo_file:
-            dynamo_file = DynamoFile(
-                pathlib.Path(self.header_data["dyn_path"]))
-
-            if not dynamo_file.exists:
-                raise FileNotFoundError(
-                    f"Dynamo graph not found: {dynamo_file.filepath}")
-
-            dynamo_file.read()
-
-            # Check if uuid is ok:
-            if not dynamo_file.uuid == self.header_data["dyn_uuid"]:
-                raise DynamoFileException(f"Dynamo graph uuid changed!")
+            dynamo_file = self.get_source_dynamo_file()
 
         new_python_node = PythonNode(
             node_id=self.header_data["py_id"],
@@ -317,49 +385,78 @@ class PythonFile(File):
             logging.info("Python file not changed, skipping")
             return
 
-        if dynamo_file.is_newer(self) and not args.force:
+        if dynamo_file.is_newer(self) and not options.force:
             logging.info("Dynamo graph is newer, skipping")
             return
 
         logging.info(f"Dynamo graph will be updated: {dynamo_file.filepath}")
         dynamo_file.update_python_node(new_python_node)
-        dynamo_file_storage.append_open_file(dynamo_file)
+
+    def get_source_dynamo_file(self) -> DynamoFile:
+        """Get the source Dynamo file of this PythonFile
+
+        Raises:
+            FileNotFoundError: The dynamo file not found
+            DynamoFileException: The uuid of the dynamo file changed
+
+        Returns:
+            DynamoFile: The DynamoFile
+        """
+        dynamo_file = DynamoFile(
+            pathlib.Path(self.header_data["dyn_path"]))
+
+        if not dynamo_file.exists:
+            raise FileNotFoundError(
+                f"Dynamo graph not found: {dynamo_file.filepath}")
+
+        dynamo_file.read()
+
+        # Check if uuid is ok:
+        if not dynamo_file.uuid == self.header_data["dyn_uuid"]:
+            raise DynamoFileException(f"Dynamo graph uuid changed!")
+
+        return dynamo_file
 
     def read(self) -> None:
         """Read python script to parameters"""
-        logging.info(f"Reading file: {self.filepath}")
-        with open(self.filepath, mode="r", newline="\r\n", encoding="utf-8") as input_py:
-            python_lines = input_py.readlines()
 
-        self.header_data = {}
-        header_separator_count = 0
-        code_start_line = 0
+        # Only read if it's not already open:
+        if not self in self.open_files:
 
-        for i, line in enumerate(python_lines):
-            line = line.strip()
-            logging.debug(f"Reading line: {line}")
+            logging.info(f"Reading file: {self.filepath}")
+            with open(self.filepath, mode="r", newline="\r\n", encoding="utf-8") as input_py:
+                python_lines = input_py.readlines()
 
-            # Skip the first lines:
-            if header_separator_count < 2:
-                if line == HEADER_SEPARATOR:
-                    header_separator_count += 1
-                continue
-            # It's the last line of the header:
-            elif line == HEADER_SEPARATOR:
-                code_start_line = i+2
-                break
+            self.header_data = {}
+            header_separator_count = 0
+            code_start_line = 0
 
-            else:
-                # Find the location of the separator
-                sl = line.find(":")
-                if sl == -1:
-                    raise PythonFileException("Error reading header!")
-                self.header_data[line[0:sl]] = line[sl+1:]
+            for i, line in enumerate(python_lines):
+                line = line.strip()
+                logging.debug(f"Reading line: {line}")
 
-        self.code = "".join(python_lines[code_start_line:])
+                # Skip the first lines:
+                if header_separator_count < 2:
+                    if line == HEADER_SEPARATOR:
+                        header_separator_count += 1
+                    continue
+                # It's the last line of the header:
+                elif line == HEADER_SEPARATOR:
+                    code_start_line = i+2
+                    break
 
-        logging.debug(f"Header data from python file: {self.header_data}")
-        # logging.debug(f"Code from python file: {self.code}")
+                else:
+                    # Find the location of the separator
+                    sl = line.find(":")
+                    if sl == -1:
+                        raise PythonFileException("Error reading header!")
+                    self.header_data[line[0:sl]] = line[sl+1:]
+
+            self.code = "".join(python_lines[code_start_line:])
+            self.open_files.add(self)
+
+            logging.debug(f"Header data from python file: {self.header_data}")
+            # logging.debug(f"Code from python file: {self.code}")
 
     def write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
@@ -370,14 +467,27 @@ class PythonFile(File):
 class PythonNode():
     """A Python node with all data"""
 
+    id: str
+    """The id of the node"""
+    engine: str
+    """The engine of the node, IronPython2 or CPython3"""
+    code: str
+    """The full code"""
+    checksum: str
+    """The checksum of the code, for checking changes"""
+    name: str
+    """The name of the node"""
+    filename: pathlib.Path | str
+    """The filename the node should be saved as, including the .py extension"""
+    filepath: pathlib.Path
+
     def __init__(self, node_dict_from_dyn: dict = {}, full_nodeviews_dict_from_dyn: dict = {},
                  node_id: str = "", engine: str = "IronPython2", code: str = "", checksum: str = "", name: str = "",
-                 source_dynamo_file: DynamoFile = None) -> None:  # type: ignore
-        """A PythonNode object
+                 source_dynamo_file: DynamoFile | None = None) -> None:
+        """A PythonNode object. If node_dict_view is given, string parameters are ignored.
 
         Args:
-            node_dict_from_dyn (dict, optional): The dict of the node from a dyn file. 
-                                                 If this is given, string parameters are ignored. Defaults to {}.
+            node_dict_from_dyn (dict, optional): The dict of the node from a dyn file. Defaults to {}.
             full_nodeviews_dict_from_dyn (dict, optional): The full nodeviews dict from a dyn file. Defaults to {}.
             node_id (str, optional): Id of the node. Defaults to "".
             engine (str, optional): Engine of the node. Defaults to "".
@@ -397,7 +507,7 @@ class PythonNode():
             self.checksum = hashlib.md5(self.code.encode()).hexdigest()
             if full_nodeviews_dict_from_dyn:
                 self.name = next(
-                    (v["Name"] for v in full_nodeviews_dict_from_dyn if v["Id"] == node_dict_from_dyn["Id"]), None)
+                    (v["Name"] for v in full_nodeviews_dict_from_dyn if v["Id"] == node_dict_from_dyn["Id"]), "")
             else:
                 self.name = name
         else:
@@ -419,59 +529,3 @@ class PythonNode():
             self.filename = sanitize_filename(
                 "_".join(filename_parts) + ".py")
             self.filepath = source_dynamo_file.dirpath.joinpath(self.filename)
-
-
-class DynamoFileStorage():
-    open_files: list[DynamoFile] = []
-    update_files: list[DynamoFile] = []
-
-    # This is a singleton:
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(DynamoFileStorage, cls).__new__(cls)
-        return cls.instance
-
-    def get_open_file_by_uuid(self, uuid: str) -> DynamoFile:
-        """Get an open Dynamo graph by its uuid
-
-        Args:
-            uuid (str): Uuid of the file
-
-        Returns:
-            DynamoFile: The file. None if not found
-        """
-        f = next((d for d in self.open_files if d.uuid == uuid), None)
-        if f:
-            logging.debug(f"Found open file {f.uuid}")
-        return f  # type: ignore
-
-    def is_uuid_on_update_list(self, uuid: str) -> bool:
-        """Check if this file is on the list of files to update
-
-        Args:
-            uuid (str): Uuid of the file
-
-        Returns:
-            bool: True, if the file is on the list
-        """
-        f = next((d for d in self.update_files if d.uuid == uuid), False)
-        return bool(f)
-
-    def append_open_file(self, dynamo_file: DynamoFile) -> None:
-        """Add a file to the list of open files
-
-        Args:
-            dynamo_file (DynamoFile): The file to add
-        """
-        if not dynamo_file in self.open_files:
-            self.open_files.append(dynamo_file)
-            logging.debug("Dynamo file added to open files")
-
-    def write_open_files(self, args: argparse.Namespace) -> None:
-        """Save open files to disk
-
-        Args:
-            args (argparse.Namespace): parsed arguments
-        """
-        for f in self.open_files:
-            f.write(args)
