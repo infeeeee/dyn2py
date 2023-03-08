@@ -1,3 +1,4 @@
+from __future__ import annotations
 import simplejson as json
 import hashlib
 import pathlib

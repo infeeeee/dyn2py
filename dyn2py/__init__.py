@@ -2,7 +2,7 @@
 """
 .. include:: ../README.md
 """
-
+from __future__ import annotations
 import argparse
 import pathlib
 from importlib_metadata import metadata
