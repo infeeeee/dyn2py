@@ -3,7 +3,7 @@ name = "dyn2py"
 version = "0.1.0"
 description = "Extract python code from Dynamo graphs"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 keywords = ["dynamo", "dyn", "visual programming"]
 license = { file = "LICENSE" }
 
