@@ -1,0 +1,30 @@
+<Workspace Version="0.7.1.2932" X="-589.793616458388" Y="-28.0702613397556" zoom="0.571728258213614" Description="" Category="" Name="Home">
+  <Elements>
+    <Dynamo.Nodes.StringInput type="Dynamo.Nodes.StringInput" guid="b6383d0b-3463-4739-8f67-af511eeb5496" nickname="String" x="1463.88410839859" y="775.621975339227" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <System.String value="C:\Users\Erick\Desktop\ADSK\ReferenceFiles\RoofPanels-subtle.xlsx" />
+    </Dynamo.Nodes.StringInput>
+    <Dynamo.Nodes.StringInput type="Dynamo.Nodes.StringInput" guid="7a8133a6-991d-45a5-816a-ee6429d4693d" nickname="String" x="1472.75997420503" y="895.385427726316" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <System.String value="Sheet1" />
+    </Dynamo.Nodes.StringInput>
+    <Dynamo.Nodes.DSFunction type="Dynamo.Nodes.DSFunction" guid="ca479114-6c9e-4b3d-a385-81addfccf901" nickname="Excel.Read" x="1743.72609696551" y="816.73202623077" isVisible="true" isUpstreamVisible="true" lacing="Shortest" assembly="DSOffice.dll" function="DSOffice.Excel.Read@string,string" />
+    <Dynamo.Nodes.DSFunction type="Dynamo.Nodes.DSFunction" guid="4a4f74f2-2e6a-4658-8523-3e26fb6e46df" nickname="Polygon.ByPoints" x="2986.00224327805" y="875.201652053384" isVisible="true" isUpstreamVisible="true" lacing="Shortest" assembly="ProtoGeometry.dll" function="Autodesk.DesignScript.Geometry.Polygon.ByPoints@Autodesk.DesignScript.Geometry.Point[]" />
+    <Dynamo.Nodes.DSFunction type="Dynamo.Nodes.DSFunction" guid="e3f7f250-f697-45a1-b452-e539bcaa5729" nickname="Surface.ByPatch" x="3203.78149274746" y="874.510289356656" isVisible="true" isUpstreamVisible="true" lacing="Shortest" assembly="ProtoGeometry.dll" function="Autodesk.DesignScript.Geometry.Surface.ByPatch@Autodesk.DesignScript.Geometry.Curve" />
+    <Dynamo.Nodes.DSFunction type="Dynamo.Nodes.DSFunction" guid="d6be51a0-0ec1-4462-891c-963ba121eae7" nickname="AdaptiveComponent.ByPoints" x="3087.8976476378" y="1165.99415025959" isVisible="true" isUpstreamVisible="true" lacing="Shortest" assembly="RevitNodes.dll" function="Revit.Elements.AdaptiveComponent.ByPoints@Autodesk.DesignScript.Geometry.Point[],Revit.Elements.FamilySymbol" />
+    <DSRevitNodesUI.FamilyTypes type="DSRevitNodesUI.FamilyTypes" guid="743df6ca-5a50-43cc-8ff7-f7923e51db8e" nickname="Family Types" x="2658.54986209909" y="1366.64973129711" isVisible="true" isUpstreamVisible="true" lacing="Disabled" index="100" />
+    <Dynamo.Nodes.CodeBlockNodeModel type="Dynamo.Nodes.CodeBlockNodeModel" guid="87602511-a932-4c98-8b6b-f46ed0dfc216" nickname="Code Block" x="1617.39906775223" y="303.481659876028" isVisible="true" isUpstreamVisible="true" lacing="Disabled" CodeText="def ExcelPoints(x,pointIndex)&#xA;{&#xA;pointValues=List.GetItemAtIndex(String.ToNumber(String.Split(List.Transpose(x),&quot;,&quot;)),pointIndex);&#xA;pointItems=List.Transpose(pointValues);&#xA;px=List.GetItemAtIndex(pointItems,0);&#xA;py=List.GetItemAtIndex(pointItems,1);&#xA;pz=List.GetItemAtIndex(pointItems,2);&#xA;return=Point.ByCoordinates(px,py,pz);&#xA;}" ShouldFocus="false" />
+    <Dynamo.Nodes.DoubleInput type="Dynamo.Nodes.DoubleInput" guid="7feba4ef-5609-450b-b542-afecc65610f1" nickname="Number" x="2290.18494819169" y="908.180076994827" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <System.Double value="0" />
+    </Dynamo.Nodes.DoubleInput>
+    <Dynamo.Nodes.CodeBlockNodeModel type="Dynamo.Nodes.CodeBlockNodeModel" guid="c073bc37-b556-4ca1-a123-50b4af301c72" nickname="Code Block" x="2497.57994977484" y="866.046123724641" isVisible="true" isUpstreamVisible="true" lacing="Disabled" CodeText="ExcelPoints(excelOutput,pointOfInterest);" ShouldFocus="false" />
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="b6383d0b-3463-4739-8f67-af511eeb5496" start_index="0" end="ca479114-6c9e-4b3d-a385-81addfccf901" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="7a8133a6-991d-45a5-816a-ee6429d4693d" start_index="0" end="ca479114-6c9e-4b3d-a385-81addfccf901" end_index="1" portType="0" />
+    <Dynamo.Models.ConnectorModel start="ca479114-6c9e-4b3d-a385-81addfccf901" start_index="0" end="c073bc37-b556-4ca1-a123-50b4af301c72" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="4a4f74f2-2e6a-4658-8523-3e26fb6e46df" start_index="0" end="e3f7f250-f697-45a1-b452-e539bcaa5729" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="743df6ca-5a50-43cc-8ff7-f7923e51db8e" start_index="0" end="d6be51a0-0ec1-4462-891c-963ba121eae7" end_index="1" portType="0" />
+    <Dynamo.Models.ConnectorModel start="7feba4ef-5609-450b-b542-afecc65610f1" start_index="0" end="c073bc37-b556-4ca1-a123-50b4af301c72" end_index="1" portType="0" />
+    <Dynamo.Models.ConnectorModel start="c073bc37-b556-4ca1-a123-50b4af301c72" start_index="0" end="4a4f74f2-2e6a-4658-8523-3e26fb6e46df" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

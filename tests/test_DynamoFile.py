@@ -29,6 +29,15 @@ class TestDynamoFile(unittest.TestCase):
         self.assertEqual(dyn.name, "python_nodes")
         self.assertTrue(dyn in dyn.open_files)
 
+        with self.assertRaises(dyn2py.DynamoFileException):
+            dyn1 = dyn2py.DynamoFile(f"{INPUT_DIR}/dynamo1file.dyn")
+            dyn1.read()
+
+        with self.assertRaises(FileNotFoundError):
+            dyn2 = dyn2py.DynamoFile(f"{INPUT_DIR}/not_existing.dyn")
+            dyn2.read()
+            
+
     def test_get_python_node(self):
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
         py_nodes = dyn.get_python_nodes()

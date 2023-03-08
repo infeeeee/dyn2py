@@ -146,7 +146,11 @@ def run(options: Options | None = None) -> None:
         if f.is_dynamo_file():
             logging.debug("Source is a Dynamo file")
             dynamo_file = DynamoFile(f.filepath)
-            dynamo_file.extract_python(options)
+
+            try:
+                dynamo_file.extract_python(options)
+            except DynamoFileException as e:
+                logging.error(f"{e} Skipping")
 
         elif f.is_python_file():
             logging.debug("Source is a Python file")

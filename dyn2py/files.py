@@ -149,48 +149,55 @@ class DynamoFile(File):
 
         logging.info(f"Extracting from file: {self.filepath}")
 
-        try:
-            self.read()
+        self.read()
 
-            # Go through nodes in the file:
-            for python_node in self.get_python_nodes():
-                if options.python_folder:
-                    python_file_path = options.python_folder.joinpath(
-                        python_node.filename)
-                else:
-                    python_file_path = python_node.filepath
+        # Go through nodes in the file:
+        for python_node in self.get_python_nodes():
+            if options.python_folder:
+                python_file_path = options.python_folder.joinpath(
+                    python_node.filename)
+            else:
+                python_file_path = python_node.filepath
 
-                python_file = PythonFile(python_file_path)
-                python_file.generate_text(
-                    dynamo_file=self, python_node=python_node)
+            python_file = PythonFile(python_file_path)
+            python_file.generate_text(
+                dynamo_file=self, python_node=python_node)
 
-                if python_file.is_newer(self) and not options.force:
-                    logging.info(
-                        f"Existing file is newer, skipping: {python_file.filepath}")
-                    continue
+            if python_file.is_newer(self) and not options.force:
+                logging.info(
+                    f"Existing file is newer, skipping: {python_file.filepath}")
+                continue
 
-                python_file.write(options)
-
-        except DynamoFileException as e:
-            logging.warn(e)
-            return
-        except json.JSONDecodeError:
-            logging.error(
-                "File is not correctly formatted. Is it a Dynamo2 file?")
-            return
+            python_file.write(options)
 
     def read(self) -> None:
-        """Read Dynamo graph to parameters"""
+        """Read Dynamo graph to parameters
+
+        Raises:
+            DynamoFileException: If the file is a Dynamo 1 file
+            json.JSONDecodeError: If there are any other problem with the file
+        """
+
+        if not self.exists:
+            raise FileNotFoundError
+
         # Only read if it's not already open:
         if not self in self.open_files:
 
             logging.debug(f"Reading file: {self.filepath}")
-            with open(self.filepath, "r", encoding="utf-8") as input_json:
-                self.full_dict = json.load(input_json,
-                                           use_decimal=True)
-                self.uuid = self.full_dict["Uuid"]
-                self.name = self.full_dict["Name"]
-                self.open_files.add(self)
+            try:
+                with open(self.filepath, "r", encoding="utf-8") as input_json:
+                    self.full_dict = json.load(input_json,
+                                               use_decimal=True)
+                    self.uuid = self.full_dict["Uuid"]
+                    self.name = self.full_dict["Name"]
+                    self.open_files.add(self)
+            except json.JSONDecodeError as e:
+                with open(self.filepath, "r", encoding="utf-8") as input_json:
+                    if input_json.readline().startswith("<Workspace Version="):
+                        raise DynamoFileException("This is a Dynamo 1 file!")
+                    else:
+                        raise e
 
     def get_python_nodes(self) -> list["PythonNode"]:
         """Get python nodes from the Dynamo graph
