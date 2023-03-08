@@ -1,6 +1,6 @@
 # dyn2py
 
-Extract python nodes from Dynamo graphs
+Extract python code from Dynamo graphs
 
 Use cases:
 
