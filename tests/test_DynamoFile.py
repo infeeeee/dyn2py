@@ -1,13 +1,11 @@
-import os
 import unittest
 import dyn2py
 import pathlib
 
-
 INPUT_DIR = "tests/input_files"
 OUTPUT_DIR = "tests/output_files"
 
-def cleanup():
+def cleanup_output_dir():
     output_dir = pathlib.Path(OUTPUT_DIR)
     if output_dir.exists():
         for f in output_dir.iterdir():
@@ -16,6 +14,12 @@ def cleanup():
         output_dir.mkdir()
 
 class TestDynamoFile(unittest.TestCase):
+
+    # Missing methods:
+    # get_related_python_files
+    # get_open_file_by_uuid
+    # update_python_node
+    # write
 
     def test_read(self):
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
@@ -39,11 +43,11 @@ class TestDynamoFile(unittest.TestCase):
             dyn.get_python_node_by_id("wrongid")
 
     def test_extract_python(self):
-        cleanup()
+        cleanup_output_dir()
 
-        opt = dyn2py.Options(python_folder="tests/output_files")
+        opt = dyn2py.Options(python_folder=OUTPUT_DIR)
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
         dyn.extract_python(options=opt)
 
-        output_dir = pathlib.Path("tests/output_files")
+        output_dir = pathlib.Path(OUTPUT_DIR)
         self.assertEqual(len(list(output_dir.iterdir())), 6)
