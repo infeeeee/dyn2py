@@ -5,3 +5,4 @@ dyn2py.egg-info
 build
 dist
 docs
+tests/output_files

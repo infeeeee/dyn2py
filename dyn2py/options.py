@@ -6,13 +6,16 @@ LOGLEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 DEFAULT_LOGLEVEL = "INFO"
 FILTERS = ["py", "dyn"]
 
+
 class Options(argparse.Namespace):
     """Class for options for running a conversion like from the command line"""
+
     def __init__(
         self,
         source: list[pathlib.Path | str] = [],
         loglevel: str = DEFAULT_LOGLEVEL,
         dry_run: bool = False,
+        force: bool = False,
         backup: bool = False,
         filter: str = "",
         update: bool = False,
@@ -24,6 +27,7 @@ class Options(argparse.Namespace):
             source (list[pathlib.Path  |  str], optional): List of files to run on. Defaults to [].
             loglevel (str, optional): log level. Defaults to DEFAULT_LOGLEVEL.
             dry_run (bool, optional): If it's a dry run. Defaults to False.
+            force (bool, optional): Overwrite files, even if they are older. Defaults to False.
             backup (bool, optional): Create backup of modified files. Defaults to False.
             filter (str, optional): 'dyn' or 'py' file filter for running on folders. Defaults to "".
             update (bool, optional): Update mode, like inverse on Dynamo files. Defaults to False.
@@ -46,6 +50,7 @@ class Options(argparse.Namespace):
             raise ValueError
 
         self.dry_run = dry_run
+        self.force = force
         self.backup = backup
 
         if not filter or filter in FILTERS:
@@ -59,16 +64,3 @@ class Options(argparse.Namespace):
             self.python_folder = pathlib.Path(python_folder)
         else:
             self.python_folder = python_folder
-
-        # super().__init__(
-        #     source=self.source,
-        #     loglevel=self.loglevel,
-        #     dry_run=self.dry_run,
-        #     backup=self.backup,
-        #     filter=self.filter,
-        #     update=self.update,
-        #     python_folder=self.python_folder,
-        # )
-
-
-

@@ -130,6 +130,8 @@ class DynamoFile(File):
     """The uuid of the graph"""
     name: str
     """The name of the graph, read from the file. Not the name of the file"""
+    python_nodes: list["PythonNode"]
+    """Python node objects, read from this file"""
 
     open_files: set["DynamoFile"] = set()
     """A set of open Dynamo files, before saving"""
@@ -195,10 +197,13 @@ class DynamoFile(File):
         Returns:
             list[PythonNode]: A list of PythonNodes in the file
         """
+        if not self in self.open_files:
+            self.read()
+
         full_python_nodes = [n for n in self.full_dict["Nodes"]
                              if n["NodeType"] == "PythonScriptNode"]
 
-        python_nodes = []
+        self.python_nodes = []
 
         for p_node in full_python_nodes:
             # The name of the node is stored here:
@@ -207,12 +212,12 @@ class DynamoFile(File):
                 node_dict_from_dyn=p_node,
                 full_nodeviews_dict_from_dyn=node_views,
                 source_dynamo_file=self)
-            python_nodes.append(python_node)
+            self.python_nodes.append(python_node)
 
-        if not python_nodes:
+        if not self.python_nodes:
             raise DynamoFileException("No python nodes in this file!")
 
-        return python_nodes
+        return self.python_nodes
 
     def get_python_node_by_id(self, node_id: str) -> "PythonNode":
         """Get a PythonNode object from this Dynamo graph, by its id
@@ -223,15 +228,28 @@ class DynamoFile(File):
         Returns:
             PythonNode: The PythonNode with the given id
         """
-        python_node_dict = next((
-            n for n in self.full_dict["Nodes"] if n["Id"] == node_id
-        ), {})
-        if not python_node_dict:
-            raise PythonNodeNotFoundException(
-                f"Node not found with id {node_id}")
+        if not self in self.open_files:
+            self.read()
 
-        python_node = PythonNode(
-            node_dict_from_dyn=python_node_dict)
+        # Find the node, if the nodes are not read yet:
+        if not self.python_nodes:
+            python_node_dict = next((
+                n for n in self.full_dict["Nodes"] if n["Id"] == node_id
+            ), {})
+            if not python_node_dict:
+                raise PythonNodeNotFoundException(
+                    f"Node not found with id {node_id}")
+
+            python_node = PythonNode(
+                node_dict_from_dyn=python_node_dict)
+        else:
+            python_node = next((
+                p for p in self.python_nodes if p.id == node_id
+            ), None)
+
+            if not python_node:
+                raise PythonNodeNotFoundException(
+                    f"Node not found with id {node_id}")
 
         return python_node
 
