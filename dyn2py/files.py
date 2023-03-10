@@ -295,7 +295,7 @@ class DynamoFile(File):
 
     def write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
-        with open(self.filepath, "w", encoding="utf-8") as output_file:
+        with open(self.filepath, "w", encoding="utf-8", newline="") as output_file:
             json.dump(self.full_dict, output_file, indent=2,  use_decimal=True)
 
     def get_related_python_files(self, options: Options | None = None) -> list["PythonFile"]:
@@ -472,7 +472,7 @@ class PythonFile(File):
         if not self in self.open_files:
 
             logging.info(f"Reading file: {self.filepath}")
-            with open(self.filepath, mode="r", newline="\r\n", encoding="utf-8") as input_py:
+            with open(self.filepath, mode="r", newline="", encoding="utf-8") as input_py:
                 python_lines = input_py.readlines()
 
             self.header_data = {}
@@ -508,7 +508,7 @@ class PythonFile(File):
 
     def write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
-        with open(self.filepath, "w", encoding="utf-8", newline='') as output_file:
+        with open(self.filepath, "w", encoding="utf-8", newline="") as output_file:
             output_file.write(self.text)
 
 

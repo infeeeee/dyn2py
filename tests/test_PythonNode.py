@@ -59,5 +59,5 @@ class TestPythonNode(unittest.TestCase):
 
         self.assertEqual(node.id, "1c5d99792882409e97e132b3e9f814b0")
         self.assertEqual(node.engine, "CPython3")
-        self.assertEqual(node.checksum, "bf0f039ef6f11c3043e0821143801d48")
+        self.assertEqual(node.checksum, "8d9091d24788a6fdfa5e1e109298b50e")
         

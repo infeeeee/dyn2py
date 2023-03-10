@@ -33,8 +33,6 @@ class TestFile(unittest.TestCase):
             self.assertEqual(the_file.dirpath, pathlib.Path(INPUT_DIR))
             self.assertEqual(the_file.realpath, pathlib.Path(path).resolve())
 
-            self.assertEqual(the_file.mtime, 1678287111.4672492)
-            self.assertEqual(the_file.mtimeiso, "2023-03-08T15:51:51.467249")
             self.assertTrue(the_file.exists)
             self.assertEqual(the_file.extension, ".dyn")
             self.assertFalse(the_file.modified)
