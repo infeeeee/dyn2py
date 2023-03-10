@@ -1,6 +1,5 @@
 import unittest
 import subprocess
-import platform
 
 
 class TestCommandLine(unittest.TestCase):

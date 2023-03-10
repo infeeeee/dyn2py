@@ -1,0 +1,92 @@
+import unittest
+import dyn2py
+import pathlib
+import platform
+
+from tests.support import *
+
+
+class TestFile(unittest.TestCase):
+
+    # Methods to test:
+    #  is_dynamo_file
+    #  is_python_file
+
+    def test_init(self):
+        paths = [
+            f"{INPUT_DIR}/python_nodes.dyn",
+            pathlib.Path(f"{INPUT_DIR}/python_nodes.dyn")
+        ]
+
+        if platform.system() == "Windows":
+            paths.extend([
+                fr"{INPUT_DIR}\python_nodes.dyn",
+                pathlib.Path(fr"{INPUT_DIR}\python_nodes.dyn")
+            ])
+
+        for path in paths:
+            the_file = dyn2py.File(path)
+
+            self.assertEqual(the_file.filepath,
+                             pathlib.Path(f"{INPUT_DIR}/python_nodes.dyn"))
+            self.assertEqual(the_file.basename, "python_nodes")
+            self.assertEqual(the_file.dirpath, pathlib.Path(INPUT_DIR))
+            self.assertEqual(the_file.realpath, pathlib.Path(path).resolve())
+
+            self.assertEqual(the_file.mtime, 1678287111.4672492)
+            self.assertEqual(the_file.mtimeiso, "2023-03-08T15:51:51.467249")
+            self.assertTrue(the_file.exists)
+            self.assertEqual(the_file.extension, ".dyn")
+            self.assertFalse(the_file.modified)
+
+    def test_init_newfile(self):
+        paths = [
+            f"{INPUT_DIR}/new_file.dyn",
+            pathlib.Path(f"{INPUT_DIR}/new_file.dyn")
+        ]
+
+        if platform.system() == "Windows":
+            paths.extend([
+                fr"{INPUT_DIR}\new_file.dyn",
+                pathlib.Path(fr"{INPUT_DIR}\new_file.dyn")
+            ])
+
+        for path in paths:
+            the_file = dyn2py.File(path)
+
+            self.assertEqual(the_file.filepath,
+                             pathlib.Path(f"{INPUT_DIR}/new_file.dyn"))
+            self.assertEqual(the_file.basename, "new_file")
+            self.assertEqual(the_file.dirpath, pathlib.Path(INPUT_DIR))
+            self.assertEqual(the_file.realpath, pathlib.Path(path).resolve())
+
+            self.assertEqual(the_file.mtime, 0.0)
+            self.assertEqual(the_file.mtimeiso, "")
+            self.assertFalse(the_file.exists)
+            self.assertEqual(the_file.extension, ".dyn")
+            self.assertFalse(the_file.modified)
+
+    def test_newer(self):
+        older_file = dyn2py.File(f"{INPUT_DIR}/python_nodes.dyn")
+        newer_file = dyn2py.File(f"{INPUT_DIR}/no_python.dyn")
+        nonexisting_file = dyn2py.File(f"{INPUT_DIR}/new_file.dyn")
+
+        self.assertTrue(newer_file.is_newer(older_file))
+        self.assertTrue(newer_file.is_newer(nonexisting_file))
+
+        self.assertFalse(older_file.is_newer(newer_file))
+        self.assertTrue(older_file.is_newer(nonexisting_file))
+
+        self.assertFalse(nonexisting_file.is_newer(older_file))
+        self.assertFalse(nonexisting_file.is_newer(newer_file))
+
+    def test_write(self):
+        existing_file = dyn2py.File(f"{INPUT_DIR}/python_nodes.dyn")
+        nonexisting_file = dyn2py.File(f"{INPUT_DIR}/new_file.dyn")
+        options = dyn2py.Options()
+
+        with self.assertRaises(TypeError):
+            existing_file.write(options)
+
+        with self.assertRaises(TypeError):
+            nonexisting_file.write(options)

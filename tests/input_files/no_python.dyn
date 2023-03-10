@@ -1,0 +1,200 @@
+{
+  "Uuid": "76de5c79-17c5-4c74-9f90-ad99a213d339",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "no_python",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "+@var[]..[],var[]..[]",
+      "Id": "f8f4d3310211429ea8f301284983849e",
+      "Inputs": [
+        {
+          "Id": "264e2d2a3442445180048463a555399a",
+          "Name": "x",
+          "Description": "Integer value, double value or string\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f627c4088ee943aeba708e81f9945f1e",
+          "Name": "y",
+          "Description": "Integer value, double value or string\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "72975df34c2542ff949630ef7253bed5",
+          "Name": "var",
+          "Description": "The sum of two input numbers, or the concatenation of two strings",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns addition of x and y\n\n+ (x: var[]..[], y: var[]..[]): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "1;",
+      "Id": "24cee4b3934f46309d34386a1b5a674a",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "dffa5271656d49e0b61ba8133b92a05e",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "26fc878922fd425a89112c6b14c9779b",
+      "Inputs": [
+        {
+          "Id": "1587eb8d7d8f41e6833e2b90f95b63fb",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d70e73be40114b9cb129a91cd4777c4a",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "72975df34c2542ff949630ef7253bed5",
+      "End": "1587eb8d7d8f41e6833e2b90f95b63fb",
+      "Id": "8d017b34cb5b47f1b900c1c6ed8fd8d0",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "dffa5271656d49e0b61ba8133b92a05e",
+      "End": "264e2d2a3442445180048463a555399a",
+      "Id": "46f9099ffb1a4e08ad78d7e13d36d8bc",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "dffa5271656d49e0b61ba8133b92a05e",
+      "End": "f627c4088ee943aeba708e81f9945f1e",
+      "Id": "f167bc9b5eed4d5c96bac03015664979",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.17",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.17.0.3472",
+      "RunType": "Automatic",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "+",
+        "ShowGeometry": true,
+        "Id": "f8f4d3310211429ea8f301284983849e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 779.0,
+        "Y": 566.5
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "24cee4b3934f46309d34386a1b5a674a",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 402.0,
+        "Y": 500.0
+      },
+      {
+        "Name": "Watch",
+        "ShowGeometry": true,
+        "Id": "26fc878922fd425a89112c6b14c9779b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1102.0,
+        "Y": 587.0
+      }
+    ],
+    "Annotations": [],
+    "X": 127.12026168573345,
+    "Y": 129.76719880218047,
+    "Zoom": 0.7658293928515516
+  }
+}

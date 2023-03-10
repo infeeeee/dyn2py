@@ -92,10 +92,18 @@ class File():
     def write(self, options: Options) -> None:
         """Prepare writing file to the disk:
             create backup, process dry-run, call filetype specific write_file() methods
+            Should be called on subclasses!
 
         Args:
             options(Options): Run options.
+
+        Raises:
+            TypeError: If called on a File object
         """
+
+        # This should only work on subclasses:
+        if type(self).__name__ == "File":
+            raise TypeError("This method shouldn't be called on File objects!")
 
         if not self.modified:
             logging.debug("File not modified, not saving")
@@ -126,16 +134,16 @@ class DynamoFile(File):
     """A Dynamo file, subclass of File()"""
 
     full_dict: dict
-    """The contents of the Dynamo file, as dict."""
+    """The contents of the Dynamo file, as dict. Initialized with read()"""
     uuid: str
-    """The uuid of the graph"""
+    """The uuid of the graph. Initialized with read()"""
     name: str
-    """The name of the graph, read from the file. Not the name of the file"""
+    """The name of the graph, read from the file. Initialized with read()"""
     python_nodes: list["PythonNode"]
-    """Python node objects, read from this file"""
+    """Python node objects, read from this file. Initialized with get_python_nodes()"""
 
     open_files: set["DynamoFile"] = set()
-    """A set of open Dynamo files, before saving"""
+    """A set of open Dynamo files, before saving. Self added by read()"""
 
     def extract_python(self, options: Options | None = None) -> None:
         """Extract and write python files
@@ -174,6 +182,7 @@ class DynamoFile(File):
         """Read Dynamo graph to parameters
 
         Raises:
+            FileNotFoundError: The file does not exist
             DynamoFileException: If the file is a Dynamo 1 file
             json.JSONDecodeError: If there are any other problem with the file
         """
@@ -204,6 +213,9 @@ class DynamoFile(File):
 
         Returns:
             list[PythonNode]: A list of PythonNodes in the file
+
+        Raises:
+            DynamoFileException: If no Python nodes in the file
         """
         if not self in self.open_files:
             self.read()
@@ -211,19 +223,24 @@ class DynamoFile(File):
         full_python_nodes = [n for n in self.full_dict["Nodes"]
                              if n["NodeType"] == "PythonScriptNode"]
 
-        self.python_nodes = []
-
-        for p_node in full_python_nodes:
-            # The name of the node is stored here:
-            node_views = self.full_dict["View"]["NodeViews"]
-            python_node = PythonNode(
-                node_dict_from_dyn=p_node,
-                full_nodeviews_dict_from_dyn=node_views,
-                source_dynamo_file=self)
-            self.python_nodes.append(python_node)
+        # Check if it was already read:
+        try:
+            self.python_nodes
+        except AttributeError:
+            self.python_nodes = []
 
         if not self.python_nodes:
-            raise DynamoFileException("No python nodes in this file!")
+            for p_node in full_python_nodes:
+                # The name of the node is stored here:
+                node_views = self.full_dict["View"]["NodeViews"]
+                python_node = PythonNode(
+                    node_dict_from_dyn=p_node,
+                    full_nodeviews_dict_from_dyn=node_views,
+                    source_dynamo_file=self)
+                self.python_nodes.append(python_node)
+
+            if not self.python_nodes:
+                raise DynamoFileException("No python nodes in this file!")
 
         return self.python_nodes
 
@@ -326,14 +343,14 @@ class PythonFile(File):
     """A Python file, subclass of File()"""
 
     code: str
-    """The python code as a string"""
+    """The python code as a string. Initialized with read()"""
     header_data: dict
-    """Parsed dict from the header of a python file"""
+    """Parsed dict from the header of a python file. Initialized with read()"""
     text: str
-    """Full contents of the file before writing"""
+    """Full contents of the file before writing. Initialized with generate_text()"""
 
     open_files: set["PythonFile"] = set()
-    """A set of open Python files"""
+    """A set of open Python files. Self added by read()"""
 
     def generate_text(self, dynamo_file: DynamoFile, python_node: "PythonNode") -> None:
         """Generate full text to write with header
@@ -348,12 +365,17 @@ class PythonFile(File):
             Do not edit this section, if you want to update the Dynamo graph!\
             """
 
+        # Double escape path:
+        dyn_path_string = str(dynamo_file.realpath)
+        if "\\" in dyn_path_string:
+            dyn_path_string = dyn_path_string.replace("\\", "\\\\")
+
         self.header_data = {
             "dyn2py_version": METADATA["Version"],
             "dyn2py_extracted": datetime.now().isoformat(),
             "dyn_uuid": dynamo_file.uuid,
             "dyn_name": dynamo_file.name,
-            "dyn_path": dynamo_file.realpath,
+            "dyn_path": dyn_path_string,
             "dyn_modified": dynamo_file.mtimeiso,
             "py_id": python_node.id,
             "py_engine": python_node.engine
@@ -486,7 +508,7 @@ class PythonFile(File):
 
     def write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
-        with open(self.filepath, "w", encoding="utf-8") as output_file:
+        with open(self.filepath, "w", encoding="utf-8", newline='') as output_file:
             output_file.write(self.text)
 
 
