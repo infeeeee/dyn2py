@@ -8,10 +8,6 @@ from tests.support import *
 
 class TestFile(unittest.TestCase):
 
-    # Methods to test:
-    #  is_dynamo_file
-    #  is_python_file
-
     def test_init(self):
         paths = [
             f"{INPUT_DIR}/python_nodes.dyn",
@@ -65,8 +61,12 @@ class TestFile(unittest.TestCase):
             self.assertFalse(the_file.modified)
 
     def test_newer(self):
+        # Touch a file, so it will be always newer than the others:
+        touched_file = pathlib.Path(f"{OUTPUT_DIR}/touched_file.py")
+        touched_file.touch()
+        newer_file = dyn2py.File(touched_file)
+
         older_file = dyn2py.File(f"{INPUT_DIR}/python_nodes.dyn")
-        newer_file = dyn2py.File(f"{INPUT_DIR}/no_python.dyn")
         nonexisting_file = dyn2py.File(f"{INPUT_DIR}/new_file.dyn")
 
         self.assertTrue(newer_file.is_newer(older_file))
@@ -88,3 +88,21 @@ class TestFile(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             nonexisting_file.write(options)
+
+    def test_is_file(self):
+
+        extract_single_node_dyn()
+
+        paths = [
+            (f"{INPUT_DIR}/python_nodes.dyn", "dyn"),
+            (f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py", "py"),
+            (f"README.md", ""),
+        ]
+
+        for path, f in paths:
+            file = dyn2py.File(path)
+            
+            self.assertEqual(file.is_dynamo_file(), f=="dyn")
+            self.assertEqual(file.is_python_file(), f=="py")
+
+            

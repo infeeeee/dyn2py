@@ -3,7 +3,7 @@
 ## Tests
 
 - [ ] Commandline
-- [ ] File
+- [x] File
 - [ ] DynamoFile
 - [ ] PythonFile
 - [x] PythonNode

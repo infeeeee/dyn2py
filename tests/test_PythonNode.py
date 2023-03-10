@@ -32,12 +32,7 @@ class TestPythonNode(unittest.TestCase):
 
     def test_init_from_py(self):
 
-        cleanup_output_dir()
-
-        # Extract py:
-        options = dyn2py.Options(python_folder=OUTPUT_DIR)
-        dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
-        dyn.extract_python(options)
+        extract_single_node_dyn()
 
         # Open the extracted file and replace a string:
         with open(f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py") as orig_py, \
