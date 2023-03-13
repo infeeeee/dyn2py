@@ -25,7 +25,7 @@ class File():
 
         Args:
             filepath (pathlib.Path | str): Path to the python file or Dynamo graph
-            read_from_disk (bool, optional): Read the file from disk. Useful for new PythonFiles. Defaults to True.
+            read_from_disk (bool, optional): Read the file from disk. Set to false to get only metadata. Defaults to True.
         """
 
         self.filepath: pathlib.Path
@@ -57,8 +57,9 @@ class File():
         if self.is_dynamo_file():
             self.__class__ = DynamoFile
 
-            # Always read DynamoFiles, they should exist:
-            self.read_file()
+            # Read DynamoFiles, they should exist:
+            if read_from_disk:
+                self.read_file()
 
         elif self.is_python_file():
             self.__class__ = PythonFile
@@ -108,17 +109,20 @@ class File():
         """
         return bool(self.extension == ".py")
 
-    def write(self, options: Options) -> None:
+    def write(self, options: Options | None = None) -> None:
         """Prepare writing file to the disk:
             create backup, process dry-run, call filetype specific write_file() methods
             Should be called on subclasses!
 
         Args:
-            options(Options): Run options.
+            options(Options | None, optional): Run options. Defaults to None.
 
         Raises:
             TypeError: If called on a File object
         """
+
+        if not options:
+            options = Options()
 
         # This should only work on subclasses:
         if type(self).__name__ == "File":
@@ -249,8 +253,7 @@ class DynamoFile(File):
             for p_node in full_python_nodes:
                 python_node = PythonNode(
                     node_dict_from_dyn=p_node,
-                    full_nodeviews_dict_from_dyn=node_views,
-                    source_dynamo_file=self)
+                    dynamo_file=self)
                 self.python_nodes.add(python_node)
 
     def get_python_node_by_id(self, node_id: str) -> "PythonNode":
@@ -329,7 +332,7 @@ class DynamoFile(File):
             python_folder = self.dirpath
 
         python_files_in_folder = [PythonFile(f) for f in python_folder.iterdir()
-                                  if File(f).is_python_file()]
+                                  if File(f, read_from_disk=False).is_python_file()]
 
         related_python_files = [
             p for p in python_files_in_folder if p.get_source_dynamo_file().uuid == self.uuid]
@@ -495,12 +498,7 @@ class PythonFile(File):
         if not dynamo_file:
             dynamo_file = self.get_source_dynamo_file()
 
-        new_python_node = PythonNode(
-            node_id=self.header_data["py_id"],
-            engine=self.header_data["py_engine"],
-            code=self.code,
-            checksum=hashlib.md5(self.code.encode()).hexdigest()
-        )
+        new_python_node = PythonNode(python_file=self)
 
         old_python_node = dynamo_file.get_python_node_by_id(
             self.header_data["py_id"])
@@ -562,46 +560,42 @@ class PythonNode():
     filename: pathlib.Path | str
     """The filename the node should be saved as, including the .py extension"""
     filepath: pathlib.Path
+    """The path is shoul"""
 
-    def __init__(self, node_dict_from_dyn: dict = {}, full_nodeviews_dict_from_dyn: dict = {},
-                 node_id: str = "", engine: str = "IronPython2", code: str = "", checksum: str = "", name: str = "",
-                 source_dynamo_file: DynamoFile | None = None) -> None:
-        """A PythonNode object. If node_dict_view is given, string parameters are ignored.
+    def __init__(self,
+                 node_dict_from_dyn: dict = {},
+                 dynamo_file: DynamoFile | None = None,
+                 python_file: PythonFile | None = None,
+                 ) -> None:
+        """A PythonNode object. Add dict and dynamo_file, or only python_file.
 
         Args:
             node_dict_from_dyn (dict, optional): The dict of the node from a dyn file. Defaults to {}.
-            full_nodeviews_dict_from_dyn (dict, optional): The full nodeviews dict from a dyn file. Defaults to {}.
-            node_id (str, optional): Id of the node. Defaults to "".
-            engine (str, optional): Engine of the node. Defaults to "".
-            code (str, optional): The code text. Defaults to "".
-            checksum (str, optional): Checksum of the code . Defaults to "".
-            name (str, optional): The name of the node. Defaults to "".
-            source_dynamo_file (DynamoFile, optional): The file the node is from, to generate filename and filepath. Defaults to None.
+            dynamo_file (DynamoFile, optional): The file the node is from. Defaults to None.
+            python_file (PythonFile, optional): The python file to be converted to node. Defaults to None.
+
+        Raises:
+            PythonNodeException: Wrong arguments were given
         """
-        if node_dict_from_dyn:
+        # Initialize from dynamo file:
+        if node_dict_from_dyn and dynamo_file and not python_file:
             self.id = node_dict_from_dyn["Id"]
-            # Older dynamo files doesn't have "Engine" property, fall back to the default
+
+            # Older dynamo files doesn't have "Engine" property, fall back to IronPython2
             if "Engine" in node_dict_from_dyn:
                 self.engine = node_dict_from_dyn["Engine"]
             else:
-                self.engine = engine
-            self.code = node_dict_from_dyn["Code"]
-            self.checksum = hashlib.md5(self.code.encode()).hexdigest()
-            if full_nodeviews_dict_from_dyn:
-                self.name = next(
-                    (v["Name"] for v in full_nodeviews_dict_from_dyn if v["Id"] == node_dict_from_dyn["Id"]), "")
-            else:
-                self.name = name
-        else:
-            self.id = node_id
-            self.engine = engine
-            self.code = code
-            self.checksum = checksum
-            self.name = name
+                self.engine = "IronPython2"
 
-        # Generate filename and filepath if source is given:
-        if source_dynamo_file:
-            filename_parts = [source_dynamo_file.basename, self.id]
+            self.code = node_dict_from_dyn["Code"]
+
+            # Get the name of the node:
+            self.name = next(
+                (v["Name"] for v in dynamo_file.full_dict["View"]["NodeViews"]
+                 if v["Id"] == node_dict_from_dyn["Id"]), "")
+
+            # Generate the filename:
+            filename_parts = [dynamo_file.basename, self.id]
 
             # Only add the name of the node if it's changed:
             if self.name and self.name != "Python Script":
@@ -610,4 +604,17 @@ class PythonNode():
             logging.debug(f"Generating filename from: {filename_parts}")
             self.filename = sanitize_filename(
                 "_".join(filename_parts) + ".py")
-            self.filepath = source_dynamo_file.dirpath.joinpath(self.filename)
+            self.filepath = dynamo_file.dirpath.joinpath(self.filename)
+
+        elif python_file and not node_dict_from_dyn and not dynamo_file:
+            self.id = python_file.header_data["py_id"]
+            self.engine = python_file.header_data["py_engine"]
+            self.code = python_file.code
+            self.filename = python_file.basename + ".py"
+            self.filepath = python_file.filepath
+
+        else:
+            raise PythonNodeException
+
+        # Calculate checksum:
+        self.checksum = hashlib.md5(self.code.encode()).hexdigest()

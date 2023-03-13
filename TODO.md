@@ -6,7 +6,7 @@
 - [x] File
 - [ ] DynamoFile
 - [ ] PythonFile
-- [x] PythonNode
+- [ ] PythonNode
 - [ ] run()
 
 ## CI/CD

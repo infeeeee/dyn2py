@@ -1,6 +1,8 @@
 import unittest
 import dyn2py
 import pathlib
+import shutil
+import simplejson as json
 
 from tests.support import *
 
@@ -8,13 +10,11 @@ from tests.support import *
 class TestDynamoFile(unittest.TestCase):
 
     # Missing methods:
-    # get_related_python_files
-    # update_python_node
-    # write
+    # update_python_node: exception
 
     def test_init(self):
         dyn2py.DynamoFile.open_files.clear()
-        
+
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
 
         self.assertEqual(dyn.uuid, "3c3b4c05-9716-4e93-9360-ca0637cb5486")
@@ -61,8 +61,71 @@ class TestDynamoFile(unittest.TestCase):
         dyn1 = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
         dyn2 = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
 
-
         self.assertEqual(dyn1,
                          dyn2py.DynamoFile.get_open_file_by_uuid("3c3b4c05-9716-4e93-9360-ca0637cb5486"))
         self.assertEqual(dyn2,
                          dyn2py.DynamoFile.get_open_file_by_uuid("76de5c79-17c5-4c74-9f90-ad99a213d339"))
+
+    def test_get_related_python_files(self):
+        cleanup_output_dir()
+
+        opt = dyn2py.Options(python_folder=OUTPUT_DIR)
+        dyn1 = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
+        dyn2 = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
+        for dyn in [dyn1, dyn2]:
+            dyn.extract_python(options=opt)
+
+        python_files1 = dyn1.get_related_python_files(options=opt)
+        python_files2 = dyn2.get_related_python_files(options=opt)
+
+        self.assertEqual(len(python_files1), 6)
+        self.assertEqual(len(python_files2), 1)
+
+        no_python_files = dyn1.get_related_python_files()
+
+        self.assertFalse(no_python_files)
+
+    def test_write_same(self):
+        cleanup_output_dir()
+
+        shutil.copy(f"{INPUT_DIR}/python_nodes.dyn",
+                    f"{OUTPUT_DIR}/python_nodes.dyn")
+
+        new_dyn = dyn2py.DynamoFile(f"{OUTPUT_DIR}/python_nodes.dyn")
+        new_dyn.modified = True
+        new_dyn.write()
+
+        with open(f"{INPUT_DIR}/python_nodes.dyn", "r", encoding="utf-8") as file1,\
+                open(f"{OUTPUT_DIR}/python_nodes.dyn", "r", encoding="utf-8") as file2:
+            json1 = json.load(file1, use_decimal=True)
+            json2 = json.load(file2, use_decimal=True)
+
+            self.assertEqual(json1, json2)
+
+    def test_update_and_write(self):
+        cleanup_output_dir()
+
+        extract_single_node_dyn(modify_py=True)
+
+        shutil.copy(f"{INPUT_DIR}/single_node.dyn",
+                    f"{OUTPUT_DIR}/single_node.dyn")
+
+        py = dyn2py.PythonFile(f"{OUTPUT_DIR}/single_node_mod.py")
+        node = dyn2py.PythonNode(python_file=py)
+        dyn = dyn2py.DynamoFile(f"{OUTPUT_DIR}/single_node.dyn")
+        dyn.update_python_node(node)
+
+        self.assertTrue(dyn.modified)
+        self.assertTrue(node in dyn.python_nodes)
+
+        # Save the file:
+        dyn.write()
+        dyn2py.DynamoFile.open_files.clear()
+
+        shutil.copy(f"{OUTPUT_DIR}/single_node.dyn",
+                    f"{OUTPUT_DIR}/single_node2.dyn")
+
+        dyn2 = dyn2py.DynamoFile(f"{OUTPUT_DIR}/single_node2.dyn")
+        node2 = dyn2.get_python_node_by_id(node_id=node.id)
+        self.assertTrue(node2)
+        self.assertEqual(node.checksum, node2.checksum)

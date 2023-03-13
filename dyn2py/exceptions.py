@@ -5,6 +5,9 @@ class DynamoFileException(Exception):
 class PythonNodeNotFoundException(Exception):
     pass
 
+class PythonNodeException(Exception):
+    pass
+
 
 class PythonFileException(Exception):
     pass
