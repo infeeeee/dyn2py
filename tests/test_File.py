@@ -35,7 +35,7 @@ class TestFile(unittest.TestCase):
             self.assertEqual(the_file.extension, ".dyn")
             self.assertFalse(the_file.modified)
 
-            self.assertEqual(the_file.__class__, dyn2py.DynamoFile)
+            self.assertIs(type(the_file), dyn2py.DynamoFile)
 
     def test_init_newfile(self):
         paths = [

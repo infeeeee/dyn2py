@@ -4,6 +4,7 @@ import hashlib
 import pathlib
 import textwrap
 import logging
+import os
 from datetime import datetime
 from decimal import Decimal
 from pathvalidate import sanitize_filename
@@ -362,7 +363,7 @@ class PythonFile(File):
     header_data: dict
     """Parsed dict from the header of a python file."""
     text: str
-    """Full contents of the file before writing."""
+    """Full contents of the file."""
 
     open_files: set["PythonFile"] = set()
     """A set of open Python files."""
@@ -421,6 +422,7 @@ class PythonFile(File):
                 python_node.code
             ])
 
+            self.code = python_node.code
             self.modified = True
 
         else:
@@ -449,6 +451,7 @@ class PythonFile(File):
             with open(self.filepath, mode="r", newline="", encoding="utf-8") as input_py:
                 python_lines = input_py.readlines()
 
+            self.text = os.linesep.join(python_lines)
             self.header_data = {}
             header_separator_count = 0
             code_start_line = 0
@@ -490,13 +493,7 @@ class PythonFile(File):
         if not options:
             options = Options()
 
-        # Check if it was already opened:
-        dynamo_file = DynamoFile.get_open_file_by_uuid(
-            self.header_data["dyn_uuid"])
-
-        # Open if it's the first time:
-        if not dynamo_file:
-            dynamo_file = self.get_source_dynamo_file()
+        dynamo_file = self.get_source_dynamo_file()
 
         new_python_node = PythonNode(python_file=self)
 
@@ -519,22 +516,25 @@ class PythonFile(File):
         """Get the source Dynamo file of this PythonFile
 
         Raises:
-            FileNotFoundError: The dynamo file not found
             DynamoFileException: The uuid of the dynamo file changed
 
         Returns:
             DynamoFile: The DynamoFile
         """
-        dynamo_file = DynamoFile(
-            pathlib.Path(self.header_data["dyn_path"]))
 
-        if not dynamo_file.exists:
-            raise FileNotFoundError(
-                f"Dynamo graph not found: {dynamo_file.filepath}")
+        # Check if it was already opened:
+        dynamo_file = DynamoFile.get_open_file_by_uuid(
+            self.header_data["dyn_uuid"])
 
-        # Check if uuid is ok:
-        if not dynamo_file.uuid == self.header_data["dyn_uuid"]:
-            raise DynamoFileException(f"Dynamo graph uuid changed!")
+        # Open if it's the first time:
+        if not dynamo_file:
+
+            dynamo_file = DynamoFile(
+                pathlib.Path(self.header_data["dyn_path"]))
+
+            # Check if uuid is ok:
+            if not dynamo_file.uuid == self.header_data["dyn_uuid"]:
+                raise DynamoFileException(f"Dynamo graph uuid changed!")
 
         return dynamo_file
 

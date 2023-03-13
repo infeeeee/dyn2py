@@ -3,14 +3,12 @@ import dyn2py
 import pathlib
 import shutil
 import simplejson as json
+from dyn2py.files import DynamoFile
 
 from tests.support import *
 
 
 class TestDynamoFile(unittest.TestCase):
-
-    # Missing methods:
-    # update_python_node: exception
 
     def test_init(self):
         dyn2py.DynamoFile.open_files.clear()
@@ -19,7 +17,7 @@ class TestDynamoFile(unittest.TestCase):
 
         self.assertEqual(dyn.uuid, "3c3b4c05-9716-4e93-9360-ca0637cb5486")
         self.assertEqual(dyn.name, "python_nodes")
-        self.assertTrue(dyn in dyn.open_files)
+        self.assertTrue(dyn in DynamoFile.open_files)
 
         # Dynamo 1 file:
         with self.assertRaises(dyn2py.DynamoFileException):
@@ -39,7 +37,7 @@ class TestDynamoFile(unittest.TestCase):
 
         self.assertEqual(len(dyn.python_nodes), 6)
         self.assertTrue(py_node)
-        self.assertTrue(py_node in dyn.python_nodes)
+        self.assertIn(py_node, dyn.python_nodes)
         self.assertEqual(py_node.checksum, "1f3d9e6153804fe1ed37571a9cda8e26")
 
         with self.assertRaises(dyn2py.PythonNodeNotFoundException):
@@ -103,29 +101,36 @@ class TestDynamoFile(unittest.TestCase):
             self.assertEqual(json1, json2)
 
     def test_update_and_write(self):
-        cleanup_output_dir()
 
         extract_single_node_dyn(modify_py=True)
 
+        # Create a copy to update it:
         shutil.copy(f"{INPUT_DIR}/single_node.dyn",
                     f"{OUTPUT_DIR}/single_node.dyn")
 
+        # Read back the modified py, and update:
         py = dyn2py.PythonFile(f"{OUTPUT_DIR}/single_node_mod.py")
-        node = dyn2py.PythonNode(python_file=py)
-        dyn = dyn2py.DynamoFile(f"{OUTPUT_DIR}/single_node.dyn")
-        dyn.update_python_node(node)
+        node1 = dyn2py.PythonNode(python_file=py)
+        dyn1 = dyn2py.DynamoFile(f"{OUTPUT_DIR}/single_node.dyn")
+        dyn1.update_python_node(node1)
 
-        self.assertTrue(dyn.modified)
-        self.assertTrue(node in dyn.python_nodes)
+        self.assertTrue(dyn1.modified)
+        self.assertIn(node1, dyn1.python_nodes)
 
         # Save the file:
-        dyn.write()
+        dyn1.write()
         dyn2py.DynamoFile.open_files.clear()
 
         shutil.copy(f"{OUTPUT_DIR}/single_node.dyn",
                     f"{OUTPUT_DIR}/single_node2.dyn")
 
+        # Check if the node in the copy:
         dyn2 = dyn2py.DynamoFile(f"{OUTPUT_DIR}/single_node2.dyn")
-        node2 = dyn2.get_python_node_by_id(node_id=node.id)
+        node2 = dyn2.get_python_node_by_id(node_id=node1.id)
+
         self.assertTrue(node2)
-        self.assertEqual(node.checksum, node2.checksum)
+        self.assertEqual(node1.checksum, node2.checksum)
+
+        with self.assertRaises(dyn2py.PythonNodeNotFoundException):
+            node2.id = "wrong_id"
+            dyn2.update_python_node(node2)

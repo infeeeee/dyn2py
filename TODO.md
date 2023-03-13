@@ -4,9 +4,9 @@
 
 - [ ] Commandline
 - [x] File
-- [ ] DynamoFile
-- [ ] PythonFile
-- [ ] PythonNode
+- [x] DynamoFile
+- [x] PythonFile
+- [x] PythonNode
 - [ ] run()
 
 ## CI/CD
