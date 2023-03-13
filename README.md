@@ -75,7 +75,7 @@ options = dyn2py.Options(
     backup=True,
     python_folder="path/to/pythonfiles")
 
-dynamo_file = dyn2py.DynamoFile("path/to/dynamofile")
+dynamo_file = dyn2py.DynamoFile("path/to/dynamofile.dyn")
 python_files = dynamo_file.get_related_python_files(options)
 
 # Read python files and update the graph:

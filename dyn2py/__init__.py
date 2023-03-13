@@ -100,7 +100,7 @@ def run(options: Options | None = None) -> None:
     logging.debug(f"Parsed arguments: {vars(options)}")
 
     # Set up sources:
-    source_files = []
+    files = []
     for source in options.source:
 
         if not source.exists():
@@ -111,14 +111,13 @@ def run(options: Options | None = None) -> None:
             logging.debug(f"Source is a folder")
 
             for f in source.iterdir():
-                source_files.append(f)
+                files.append(File(f))
 
         # It's a single file:
         else:
-            source_files.append(source)
+            files.append(File(source))
 
     # Dynamo files come first, sort sources:
-    files = [File(f) for f in source_files]
     files.sort(key=lambda f: f.extension)
 
     # Filters:
@@ -145,17 +144,15 @@ def run(options: Options | None = None) -> None:
 
         if f.is_dynamo_file():
             logging.debug("Source is a Dynamo file")
-            dynamo_file = DynamoFile(f.filepath)
 
             try:
-                dynamo_file.extract_python(options)
+                f.extract_python(options)
             except DynamoFileException as e:
                 logging.error(f"{e} Skipping")
 
         elif f.is_python_file():
             logging.debug("Source is a Python file")
-            python_file = PythonFile(f.filepath)
-            python_file.update_dynamo(options)
+            f.update_dynamo(options)
 
     # Dynamo files are written only at the end, so they don't get updated too frequently
     for f in DynamoFile.open_files:

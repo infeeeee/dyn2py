@@ -8,7 +8,6 @@ class TestPythonNode(unittest.TestCase):
 
     def test_init_from_dyn(self):
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
-        dyn.read()
         node_dict = next((n for n in dyn.full_dict["Nodes"]
                           if n["NodeType"] == "PythonScriptNode"), {})
 
@@ -43,8 +42,7 @@ class TestPythonNode(unittest.TestCase):
                 mod_py.write(line)
 
         py = dyn2py.PythonFile(f"{OUTPUT_DIR}/single_node_mod.py")
-        py.read()
-
+        
         node = dyn2py.PythonNode(
             node_id=py.header_data["py_id"],
             engine=py.header_data["py_engine"],
