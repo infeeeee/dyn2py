@@ -23,8 +23,13 @@ __all__ = [
     "PythonNode",
     "DynamoFileException",
     "PythonNodeNotFoundException",
+    "PythonNodeException",
     "PythonFileException"
 ]
+
+
+def __dir__():
+    return __all__
 
 
 def run(options: Options | None = None) -> None:
@@ -48,6 +53,11 @@ def run(options: Options | None = None) -> None:
             Do not move the source Dynamo graphs, or update won't work with them later.
             """)
         )
+
+        parser.add_argument("-v", "--version",
+                            action="version",
+                            version=f'{METADATA["Name"]} {METADATA["Version"]}'
+                            )
 
         parser.add_argument("-l", "--loglevel",
                             metavar="LOGLEVEL",

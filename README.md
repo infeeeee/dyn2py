@@ -9,16 +9,14 @@ Use cases:
 
 ## Installation
 
-*TODO*
+### With pip from Github
 
-<!-- ### pip
+Requirements: git, python, pip
 
-1. Install python
-2. `py -m pip install dyn2py`
+```
+pip install "dyn2py @ git+https://github.com/infeeeee/dyn2py"
+```
 
-### github releases
-
--->
 
 ## Usage
 
@@ -35,6 +33,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
   -l LOGLEVEL, --loglevel LOGLEVEL
                         set log level, possible options: CRITICAL, ERROR, WARNING, INFO, DEBUG
   -n, --dry-run         do not modify files, only show log

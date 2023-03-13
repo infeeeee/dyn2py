@@ -110,20 +110,17 @@ class File():
         """
         return bool(self.extension == ".py")
 
-    def write(self, options: Options | None = None) -> None:
+    def write(self, options: Options = Options()) -> None:
         """Prepare writing file to the disk:
             create backup, process dry-run, call filetype specific write_file() methods
             Should be called on subclasses!
 
         Args:
-            options(Options | None, optional): Run options. Defaults to None.
+            options(Options, optional): Run options. Defaults to Options().
 
         Raises:
             TypeError: If called on a File object
         """
-
-        if not options:
-            options = Options()
 
         # This should only work on subclasses:
         if type(self).__name__ == "File":
@@ -169,15 +166,12 @@ class DynamoFile(File):
     open_files: set[DynamoFile] = set()
     """A set of open Dynamo files, before saving. Self added by read()"""
 
-    def extract_python(self, options: Options | None = None) -> None:
+    def extract_python(self, options: Options = Options()) -> None:
         """Extract and write python files
 
         Args:
-            options(Options | None, optional): Run options. Defaults to None.
+            options(Options, optional): Run options. Defaults to Options().
         """
-
-        if not options:
-            options = Options()
 
         logging.info(f"Extracting from file: {self.filepath}")
 
@@ -314,17 +308,15 @@ class DynamoFile(File):
         with open(self.filepath, "w", encoding="utf-8", newline="") as output_file:
             json.dump(self.full_dict, output_file, indent=2,  use_decimal=True)
 
-    def get_related_python_files(self, options: Options | None = None) -> list["PythonFile"]:
+    def get_related_python_files(self, options: Options = Options()) -> list["PythonFile"]:
         """Get python files exported from this Dynamo file
 
         Args:
-            options(Options | None, optional): Run options. Defaults to None.
+            options(Options, optional): Run options. Defaults to Options().
 
         Returns:
             list[PythonFile]: A list of PythonFile objects
         """
-        if not options:
-            options = Options()
 
         # Find the folder of the python files
         if options.python_folder:
@@ -483,15 +475,12 @@ class PythonFile(File):
             logging.debug(f"Header data from python file: {self.header_data}")
             # logging.debug(f"Code from python file: {self.code}")
 
-    def update_dynamo(self, options: Options | None = None) -> None:
+    def update_dynamo(self, options: Options = Options()) -> None:
         """Update a the source Dynamo graph from this python script
 
         Args:
-            options (Options | None, optional): Run options. Defaults to None.
+            options (Options, optional): Run options. Defaults to Options().
         """
-
-        if not options:
-            options = Options()
 
         dynamo_file = self.get_source_dynamo_file()
 
