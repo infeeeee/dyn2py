@@ -10,7 +10,7 @@ class TestCommandLine(unittest.TestCase):
 
     # Sources to test:          normal      dry_run     force       backup      filter      update      python_folder
     # - single dyn file         ✅          ✅          ✅          ✅                                    ✅
-    # - multiple dyn files
+    # - multiple dyn files      ✅          ✅          ✅          ✅                                    ✅
     # - single python file
     # - multiple python files
     # - single folder
@@ -61,6 +61,54 @@ class TestCommandLine(unittest.TestCase):
 
         return output
 
+    @staticmethod
+    def generate_test_args(source_dicts: list[dict]) -> list[dict]:
+
+        tests = []
+
+        for i, source_dict in enumerate(source_dicts):
+            for backup_arg in ["-b", "--backup"]:
+                for force_arg in ["-F", "--force"]:
+                    for pfolder_option in ["", "-p", "--python-folder"]:
+
+                        test_dicts = [source_dict.copy()]
+
+                        test_dicts[0]["filenames"] = [
+                            test_dicts[0]["filename"]]
+                        if i == 0:
+                            # Create a multi file version on the first file:
+                            d = {}
+                            for key in source_dict:
+                                if key == "filename":
+                                    d["filenames"] = [f["filename"]
+                                                      for f in source_dicts]
+                                elif isinstance(source_dict[key], (int, float)):
+                                    d[key] = sum([f[key]
+                                                 for f in source_dicts])
+                            test_dicts.append(d)
+
+                        for test_dict in test_dicts:
+
+                            if pfolder_option:
+                                file_dir = INPUT_DIR
+                                pfolder_arg = f"{pfolder_option} {OUTPUT_DIR}"
+                            else:
+                                file_dir = OUTPUT_DIR
+                                pfolder_arg = ""
+
+                            test_dict["filepath"] = " ".join(
+                                [f"{file_dir}/{f}" for f in test_dict["filenames"]])
+
+                            test_dict.update({
+                                "pfolder_arg": pfolder_arg,
+                                "backup_arg": backup_arg,
+                                "force_arg": force_arg
+                            })
+
+                            tests.append(test_dict)
+
+        return tests
+
     def test_dyn_error(self):
         for s in self.dyn_sources_error:
 
@@ -77,43 +125,23 @@ class TestCommandLine(unittest.TestCase):
             self.assertEqual(
                 len(file_open["python_file_mtimes"]), 0)
 
-    def test_single_dyn(self):
+    def test_dyn(self):
 
-        dyn_tests = []
-
-        for source_dict in self.dyn_sources:
-            for backup_arg in ["-b", "--backup"]:
-                for force_arg in ["-F", "--force"]:
-                    for pfolder_option in ["", "-p", "--python-folder"]:
-
-                        test_dict = source_dict.copy()
-
-                        if pfolder_option:
-                            test_dict["filepath"] = f"{INPUT_DIR}/{source_dict['filename']}"
-                            pfolder_arg = f"{pfolder_option} {OUTPUT_DIR}"
-                        else:
-                            test_dict["filepath"] = f"{OUTPUT_DIR}/{source_dict['filename']}"
-                            pfolder_arg = ""
-
-                        test_dict.update({
-                            "pfolder_arg": pfolder_arg,
-                            "backup_arg": backup_arg,
-                            "force_arg": force_arg
-                        })
-
-                        dyn_tests.append(test_dict)
+        dyn_tests = self.generate_test_args(self.dyn_sources)
 
         for s in dyn_tests:
             cleanup_output_dir()
 
             if not s["pfolder_arg"]:
-                shutil.copy(f"{INPUT_DIR}/{s['filename']}",
-                            f"{OUTPUT_DIR}/{s['filename']}")
+                for filename in s["filenames"]:
+                    shutil.copy(f"{INPUT_DIR}/{filename}",
+                                f"{OUTPUT_DIR}/{filename}")
 
             file_open = self.run_command(
                 [s["pfolder_arg"], s['filepath']])
 
-            self.assertFalse(bool(file_open["stderr"]))
+            self.assertFalse(
+                bool(file_open["stderr"]), msg=file_open["stderr"])
             self.assertEqual(
                 len(file_open["python_file_mtimes"]), s["py_file_count"])
 
