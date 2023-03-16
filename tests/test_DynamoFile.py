@@ -3,7 +3,6 @@ import dyn2py
 import pathlib
 import shutil
 import simplejson as json
-from dyn2py.files import DynamoFile
 
 from tests.support import *
 
@@ -17,7 +16,7 @@ class TestDynamoFile(unittest.TestCase):
 
         self.assertEqual(dyn.uuid, "3c3b4c05-9716-4e93-9360-ca0637cb5486")
         self.assertEqual(dyn.name, "python_nodes")
-        self.assertTrue(dyn in DynamoFile.open_files)
+        self.assertTrue(dyn in dyn2py.DynamoFile.open_files)
 
         # Dynamo 1 file:
         with self.assertRaises(dyn2py.DynamoFileException):
@@ -45,10 +44,16 @@ class TestDynamoFile(unittest.TestCase):
 
     def test_extract_python(self):
         cleanup_output_dir()
+        dyn2py.PythonFile.open_files.clear()
 
         opt = dyn2py.Options(python_folder=OUTPUT_DIR)
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
         dyn.extract_python(options=opt)
+
+        self.assertEqual(len(dyn2py.PythonFile.open_files), 6)
+
+        for f in dyn2py.PythonFile.open_files:
+            f.write()
 
         output_dir = pathlib.Path(OUTPUT_DIR)
         self.assertEqual(len(list(output_dir.iterdir())), 6)
@@ -72,6 +77,9 @@ class TestDynamoFile(unittest.TestCase):
         dyn2 = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
         for dyn in [dyn1, dyn2]:
             dyn.extract_python(options=opt)
+            for f in dyn2py.PythonFile.open_files:
+                f.write()
+            dyn2py.PythonFile.open_files.clear()
 
         python_files1 = dyn1.get_related_python_files(options=opt)
         python_files2 = dyn2.get_related_python_files(options=opt)

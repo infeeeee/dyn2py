@@ -1,6 +1,6 @@
 [project]
 name = "dyn2py"
-version = "0.2.1"
+version = "0.3.0"
 description = "Extract python code from Dynamo graphs"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -30,7 +30,7 @@ changelog = "https://github.com/infeeeee/dyn2py/releases"
 
 
 [project.scripts]
-dyn2py = "dyn2py:run"
+dyn2py = "dyn2py:__command_line"
 
 
 [build-system]

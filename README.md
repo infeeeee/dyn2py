@@ -24,7 +24,7 @@ pip install "dyn2py @ git+https://github.com/infeeeee/dyn2py"
 
 ```
 > dyn2py --help
-usage: dyn2py [-h] [-l LOGLEVEL] [-n] [-F] [-b] [-f {py,dyn}] [-u] [-p path/to/folder] source
+usage: dyn2py [-h] [-v] [-l LOGLEVEL] [-n] [-F] [-b] [-f {py,dyn}] [-u] [-p path/to/folder] [source ...]
 
 Extract python code from Dynamo graphs
 
@@ -49,6 +49,7 @@ dynamo options, only for processing Dynamo graphs:
 
 The script by default overwrites older files with newer files.
 Do not move the source Dynamo graphs, or update won't work with them later.
+Multiple sources are supported, separate them by spaces.
 ```
 
 ### As a python module
@@ -61,7 +62,8 @@ Most basic example to extract all nodes next to a dynamo file:
 import dyn2py
 
 dynamo_file = dyn2py.DynamoFile("path/to/dynamofile.dyn")
-dynamo_file.extract_python()
+python_files = dynamo_file.extract_python()
+[python_file.write() for python_file in python_files]
 ```
 
 Change options like with the command line switches with the `Options` class:
@@ -78,9 +80,7 @@ dynamo_file = dyn2py.DynamoFile("path/to/dynamofile.dyn")
 python_files = dynamo_file.get_related_python_files(options)
 
 # Read python files and update the graph:
-if python_files:
-    for python_file in python_files:
-        python_file.update_dynamo(options)
+[python_file.update_dynamo(options) for python_file in python_files]
 
 # Don't forget to save at the end:
 dynamo_file.write(options)
@@ -115,9 +115,9 @@ pip install -e .[build]
 pyinstaller dyn2py.spec
 ```
 
-### Generate module documentation
+### Live module documentation
 
 ```
 pip install -e .[doc]
-pdoc -d google -o docs dyn2py
+pdoc -d google dyn2py
 ```

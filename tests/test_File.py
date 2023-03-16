@@ -74,6 +74,8 @@ class TestFile(unittest.TestCase):
         cleanup_output_dir()
         opt = dyn2py.Options(python_folder=OUTPUT_DIR)
         older_file.extract_python(options=opt)  # type: ignore
+        for f in dyn2py.PythonFile.open_files:
+            f.write()
         newer_file = dyn2py.File(
             f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
 

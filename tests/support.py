@@ -28,7 +28,11 @@ def extract_single_node_dyn(modify_py: bool = False):
     # Extract py:
     options = dyn2py.Options(python_folder=OUTPUT_DIR)
     dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
-    dyn.extract_python(options)
+    pythonfiles = dyn.extract_python(options)
+    pythonfiles[0].write()
+
+    dyn2py.PythonFile.open_files.clear()
+    dyn2py.DynamoFile.open_files.clear()
 
     if modify_py:
         # Open the extracted file and replace a string:
@@ -38,3 +42,6 @@ def extract_single_node_dyn(modify_py: bool = False):
                 if "asd_string" in line:
                     line = line.replace("asd_string", "qwe_string")
                 mod_py.write(line)
+
+
+

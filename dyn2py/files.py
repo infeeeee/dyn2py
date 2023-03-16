@@ -22,11 +22,12 @@ class File():
     """Base class for managing files"""
 
     def __init__(self, filepath: pathlib.Path | str, read_from_disk: bool = True) -> None:
-        """Generate a file object. If the path is correct it will become a DynamoFile or PythonFile object
+        """Generate a file object. If the path is correct it will become a DynamoFile or PythonFile object.
+            Calls DynamoFile.read_file() and PythonFile.read_file()
 
         Args:
             filepath (pathlib.Path | str): Path to the python file or Dynamo graph
-            read_from_disk (bool, optional): Read the file from disk. Set to false to get only metadata. Defaults to True.
+            read_from_disk (bool, optional): Read the file from disk. False to get only metadata. Defaults to True.
         """
 
         self.filepath: pathlib.Path
@@ -69,7 +70,7 @@ class File():
             if self.exists and read_from_disk:
                 self.read_file()
 
-        if self.exists and read_from_disk:
+        if self.exists:
             logging.debug(f"File exists: {self.filepath}")
             self.mtime = self.filepath.stat().st_mtime
             self.mtimeiso = datetime.fromtimestamp(self.mtime).isoformat()
@@ -78,11 +79,11 @@ class File():
         """Should be implemented in subclasses"""
         pass
 
-    def is_newer(self, other_file: "File") -> bool:
+    def is_newer(self, other_file: File) -> bool:
         """Check if this file is newer than the other file
 
         Args:
-            other_file(File): The other file
+            other_file (File): The other file
 
         Returns:
             bool: True if this file is newer or the other doesn't exist
@@ -110,17 +111,20 @@ class File():
         """
         return bool(self.extension == ".py")
 
-    def write(self, options: Options = Options()) -> None:
+    def write(self, options: Options | None = None) -> None:
         """Prepare writing file to the disk:
             create backup, process dry-run, call filetype specific write_file() methods
             Should be called on subclasses!
 
         Args:
-            options(Options, optional): Run options. Defaults to Options().
+            options (Options | None, optional): Run options. Defaults to None.
 
         Raises:
             TypeError: If called on a File object
         """
+
+        if not options:
+            options = Options()
 
         # This should only work on subclasses:
         if type(self).__name__ == "File":
@@ -144,11 +148,16 @@ class File():
                 f"Should write file, but it's a dry-run: {self.filepath}")
         else:
             logging.info(f"Writing file: {self.filepath}")
-            self.write_file()
+            self._write_file()
 
-    def write_file(self):
-        """Should be implemented in subclasses"""
-        pass
+    def _write_file(self):
+        """Should be implemented in subclasses
+
+        Raises:
+            NotImplementedError: If called on a File object
+        """
+        raise NotImplementedError(
+            "Should be called only on DynamoFile and PythonFile objects!")
 
 
 class DynamoFile(File):
@@ -166,14 +175,21 @@ class DynamoFile(File):
     open_files: set[DynamoFile] = set()
     """A set of open Dynamo files, before saving. Self added by read()"""
 
-    def extract_python(self, options: Options = Options()) -> None:
-        """Extract and write python files
+    def extract_python(self, options: Options | None = None) -> list[PythonFile]:
+        """Extract python files from Dynamo graphs, add them to open_files
 
         Args:
-            options(Options, optional): Run options. Defaults to Options().
+            options (Options | None, optional): Run options. Defaults to None.
+
+        Returns:
+            list[PythonFile]: List of PythonFile objects extracted from this DynamoFile
         """
 
+        if not options:
+            options = Options()
+
         logging.info(f"Extracting from file: {self.filepath}")
+        python_files = []
 
         # Go through nodes in the file:
         for python_node in self.python_nodes:
@@ -190,11 +206,14 @@ class DynamoFile(File):
             )
 
             if python_file.is_newer(self) and not options.force:
-                logging.info(
+                PythonFile.open_files.remove(python_file)
+                logging.warning(
                     f"Existing file is newer, skipping: {python_file.filepath}")
                 continue
 
-            python_file.write(options)
+            python_files.append(python_file)
+
+        return python_files
 
     def read_file(self, reread: bool = False) -> None:
         """Read Dynamo graph to parameters. Automatically called by __init__()
@@ -251,11 +270,11 @@ class DynamoFile(File):
                     dynamo_file=self)
                 self.python_nodes.add(python_node)
 
-    def get_python_node_by_id(self, node_id: str) -> "PythonNode":
+    def get_python_node_by_id(self, node_id: str) -> PythonNode:
         """Get a PythonNode object from this Dynamo graph, by its id
 
         Args:
-            node_id(str): The id of the python node as string
+            node_id (str): The id of the python node as string
 
         Returns:
             PythonNode: The PythonNode with the given id
@@ -278,7 +297,7 @@ class DynamoFile(File):
         """Update the code of a PythonNode in this file
 
         Args:
-            python_node(PythonNode): The new node
+            python_node (PythonNode): The new node
 
         Raises:
             PythonNodeNotFoundException: Existing node not found
@@ -303,20 +322,22 @@ class DynamoFile(File):
 
         self.modified = True
 
-    def write_file(self) -> None:
+    def _write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
         with open(self.filepath, "w", encoding="utf-8", newline="") as output_file:
             json.dump(self.full_dict, output_file, indent=2,  use_decimal=True)
 
-    def get_related_python_files(self, options: Options = Options()) -> list["PythonFile"]:
+    def get_related_python_files(self, options: Options | None = None) -> list[PythonFile]:
         """Get python files exported from this Dynamo file
 
         Args:
-            options(Options, optional): Run options. Defaults to Options().
+            options (Options | None, optional): Run options. Defaults to None.
 
         Returns:
             list[PythonFile]: A list of PythonFile objects
         """
+        if not options:
+            options = Options()
 
         # Find the folder of the python files
         if options.python_folder:
@@ -333,11 +354,11 @@ class DynamoFile(File):
         return related_python_files
 
     @staticmethod
-    def get_open_file_by_uuid(uuid: str) -> "DynamoFile | None":
+    def get_open_file_by_uuid(uuid: str) -> DynamoFile | None:
         """Get an open Dynamo graph by its uuid
 
         Args:
-            uuid(str): Uuid of the file
+            uuid (str): Uuid of the file
         Returns:
             DynamoFile: The file. None if not found
         """
@@ -357,7 +378,7 @@ class PythonFile(File):
     text: str
     """Full contents of the file."""
 
-    open_files: set["PythonFile"] = set()
+    open_files: set[PythonFile] = set()
     """A set of open Python files."""
 
     def __init__(self,
@@ -475,12 +496,15 @@ class PythonFile(File):
             logging.debug(f"Header data from python file: {self.header_data}")
             # logging.debug(f"Code from python file: {self.code}")
 
-    def update_dynamo(self, options: Options = Options()) -> None:
+    def update_dynamo(self, options: Options | None = None) -> None:
         """Update a the source Dynamo graph from this python script
 
         Args:
-            options (Options, optional): Run options. Defaults to Options().
+            options (Options | None, optional): Run options. Defaults to None.
         """
+
+        if not options:
+            options = Options()
 
         dynamo_file = self.get_source_dynamo_file()
 
@@ -527,7 +551,7 @@ class PythonFile(File):
 
         return dynamo_file
 
-    def write_file(self) -> None:
+    def _write_file(self) -> None:
         """Write this file to the disk. Should be called only from File.write()"""
         with open(self.filepath, "w", encoding="utf-8", newline="") as output_file:
             output_file.write(self.text)
