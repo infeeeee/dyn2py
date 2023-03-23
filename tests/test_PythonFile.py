@@ -2,6 +2,7 @@ import unittest
 import dyn2py
 import shutil
 from time import sleep
+import os
 
 from tests.support import *
 
@@ -11,8 +12,7 @@ class TestPythonFile(unittest.TestCase):
     def test_init(self):
         extract_single_node_dyn()
 
-        py1 = dyn2py.PythonFile(
-            f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
+        py1 = dyn2py.PythonFile(f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
 
         dyn2py.DynamoFile.open_files.clear()
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
@@ -22,8 +22,8 @@ class TestPythonFile(unittest.TestCase):
 
         for py in [py1, py2]:
 
-            self.assertEqual(len(py.code.split("\n")), 17)
-            self.assertEqual(len(py.text.split("\r\n")), 31)
+            self.assertEqual(len(py.code.split(os.linesep)), 17)
+            self.assertEqual(len(py.text.split(os.linesep)), 32, msg=py.filepath)
             self.assertIs(type(py.header_data), dict)
             self.assertTrue(py in dyn2py.PythonFile.open_files)
 
