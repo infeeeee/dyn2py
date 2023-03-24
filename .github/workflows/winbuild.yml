@@ -1,0 +1,33 @@
+name: Build Windows exe
+
+on:
+  push:
+    # Only build for tags.
+    tags:
+      - "*"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[build]
+
+      - name: Build
+        run: pyinstaller dyn2py.spec
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dyn2py.exe
+          path: dist/dyn2py.exe

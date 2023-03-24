@@ -12,8 +12,8 @@
 ## CI/CD
 
 - [x] Tests on Linux
-- [ ] Tests on Windows
-- [ ] Windows Build
+- [x] Tests on Windows
+- [x] Windows Build
 - [ ] Windows Installer
 - [ ] Pip
 

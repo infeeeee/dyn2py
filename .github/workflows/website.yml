@@ -1,27 +1,22 @@
 name: Deploy website
 
-# build the documentation whenever there are new commits on main
 on:
   push:
-    branches:
-      - main
-    # Alternative: only build for tags.
-    # tags:
-    #   - '*'
+    # Only build for tags.
+    tags:
+      - "*"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-
 # security: restrict permissions for CI jobs.
 permissions:
   contents: read
-  
+
 # Allow one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
-
 
 jobs:
   # Build the documentation and upload the static HTML files as an artifact.
@@ -31,11 +26,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - run: pip install -e .[doc]
-      # ADJUST THIS: build your documentation into docs/.
-      # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
       - run: pdoc -d google -o docs dyn2py
 
       - uses: actions/upload-pages-artifact@v1
