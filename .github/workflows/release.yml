@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build-windows-portable:
+  build-and-release:
     runs-on: windows-latest
 
     steps:
@@ -31,17 +31,7 @@ jobs:
           name: dyn2py.exe
           path: dist/dyn2py.exe
 
-  release:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: dyn2py.exe
-
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dyn2py.exe
+          files: dist/dyn2py.exe
