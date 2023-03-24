@@ -2,7 +2,6 @@ from __future__ import annotations
 import simplejson as json
 import hashlib
 import pathlib
-import textwrap
 import logging
 import os
 from datetime import datetime
@@ -317,8 +316,8 @@ class DynamoFile(File):
         self.python_nodes.remove(python_node_in_file)
         self.python_nodes.add(python_node)
 
-        # Update the dict:
-        node_dict["Code"] = python_node.code
+        # Update the dict, Dyn files are always CRLF:
+        node_dict["Code"] = "\r\n".join(python_node.code)
 
         self.modified = True
 
@@ -371,8 +370,8 @@ class DynamoFile(File):
 class PythonFile(File):
     """A Python file, subclass of File()"""
 
-    code: str
-    """The python code as a string."""
+    code: list[str]
+    """The python code."""
     header_data: dict
     """Parsed dict from the header of a python file."""
     text: str
@@ -399,10 +398,10 @@ class PythonFile(File):
             # Do not read from disk:
             super().__init__(filepath, read_from_disk=False)
 
-            header_notice = """\
-            This file was generated with dyn2py from a Dynamo graph.
-            Do not edit this section, if you want to update the Dynamo graph!\
-            """
+            header_notice = os.linesep.join([
+                "This file was generated with dyn2py from a Dynamo graph.",
+                "Do not edit this section, if you want to update the Dynamo graph!"
+            ])
 
             # Double escape path:
             dyn_path_string = str(dynamo_file.realpath)
@@ -420,19 +419,19 @@ class PythonFile(File):
                 "py_engine": python_node.engine
             }
 
-            header_string = "\r\n".join(
+            header_string = os.linesep.join(
                 [f"{k}:{self.header_data[k]}" for k in self.header_data])
             header_wrapper = '"""'
 
-            self.text = "\r\n".join([
+            self.text = os.linesep.join([
                 header_wrapper,
                 HEADER_SEPARATOR,
-                textwrap.dedent(header_notice),
+                header_notice,
                 HEADER_SEPARATOR,
                 header_string,
                 HEADER_SEPARATOR,
                 header_wrapper,
-                python_node.code
+                os.linesep.join(python_node.code)
             ])
 
             self.code = python_node.code
@@ -462,7 +461,8 @@ class PythonFile(File):
 
             logging.info(f"Reading file: {self.filepath}")
             with open(self.filepath, mode="r", newline="", encoding="utf-8") as input_py:
-                python_lines = input_py.readlines()
+                python_lines = [line.strip("\r\n")
+                                for line in input_py.readlines()]
 
             self.text = os.linesep.join(python_lines)
             self.header_data = {}
@@ -470,7 +470,6 @@ class PythonFile(File):
             code_start_line = 0
 
             for i, line in enumerate(python_lines):
-                line = line.strip()
                 logging.debug(f"Reading line: {line}")
 
                 # Skip the first lines:
@@ -490,7 +489,7 @@ class PythonFile(File):
                         raise PythonFileException("Error reading header!")
                     self.header_data[line[0:sl]] = line[sl+1:]
 
-            self.code = "".join(python_lines[code_start_line:])
+            self.code = python_lines[code_start_line:]
             self.open_files.add(self)
 
             logging.debug(f"Header data from python file: {self.header_data}")
@@ -564,7 +563,7 @@ class PythonNode():
     """The id of the node"""
     engine: str
     """The engine of the node, IronPython2 or CPython3"""
-    code: str
+    code: list[str]
     """The full code"""
     checksum: str
     """The checksum of the code, for checking changes"""
@@ -600,7 +599,8 @@ class PythonNode():
             else:
                 self.engine = "IronPython2"
 
-            self.code = node_dict_from_dyn["Code"]
+            # It's read from a dynamo file, so separator is always CRLF
+            self.code = node_dict_from_dyn["Code"].split("\r\n")
 
             # Get the name of the node:
             self.name = next(
@@ -619,6 +619,7 @@ class PythonNode():
                 "_".join(filename_parts) + ".py")
             self.filepath = dynamo_file.dirpath.joinpath(self.filename)
 
+        # Initialize from a python file:
         elif python_file and not node_dict_from_dyn and not dynamo_file:
             self.id = python_file.header_data["py_id"]
             self.engine = python_file.header_data["py_engine"]
@@ -630,4 +631,5 @@ class PythonNode():
             raise PythonNodeException
 
         # Calculate checksum:
-        self.checksum = hashlib.md5(self.code.encode()).hexdigest()
+        checksums = [hashlib.md5(l.encode()).hexdigest() for l in self.code]
+        self.checksum = hashlib.md5("".join(checksums).encode()).hexdigest()
