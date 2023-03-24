@@ -9,6 +9,7 @@ from importlib_metadata import metadata
 import textwrap
 import logging
 import inspect
+import sys
 from dyn2py.files import *
 from dyn2py.options import *
 
@@ -91,7 +92,7 @@ def __command_line() -> None:
     parser.add_argument("source",
                         type=pathlib.Path,
                         help="path to a Dynamo graph, a python script or a folder containing them",
-                        nargs="*"
+                        nargs="+"
                         )
 
     options = parser.parse_args(namespace=Options())
@@ -128,7 +129,7 @@ def run(options: Options) -> None:
             if from_command_line:
                 # log only if it was called from command line:
                 logging.error(f"File does not exist: {source}")
-                exit(1)
+                sys.exit(1)
             else:
                 raise FileNotFoundError(f"Source file does not exist!")
 
@@ -181,7 +182,7 @@ def run(options: Options) -> None:
 
     if not files and from_command_line:
         logging.error("No files to process! See previous warnings!")
-        exit(1)
+        sys.exit(1)
 
     # Cycle through files:
     for f in files:
