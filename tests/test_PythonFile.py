@@ -22,7 +22,7 @@ class TestPythonFile(unittest.TestCase):
 
         for py in [py1, py2]:
 
-            self.assertEqual(len(py.code.split(os.linesep)), 17)
+            self.assertEqual(len(py.code), 17)
             self.assertEqual(len(py.text.split(os.linesep)), 32, msg=py.filepath)
             self.assertIs(type(py.header_data), dict)
             self.assertTrue(py in dyn2py.PythonFile.open_files)

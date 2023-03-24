@@ -37,7 +37,7 @@ class TestDynamoFile(unittest.TestCase):
         self.assertEqual(len(dyn.python_nodes), 6)
         self.assertTrue(py_node)
         self.assertIn(py_node, dyn.python_nodes)
-        self.assertEqual(py_node.checksum, "1f3d9e6153804fe1ed37571a9cda8e26")
+        self.assertEqual(py_node.checksum, "e830a6ae6b395bcfd4e5a40da48f3bfc")
 
         with self.assertRaises(dyn2py.PythonNodeNotFoundException):
             dyn.get_python_node_by_id("wrongid")

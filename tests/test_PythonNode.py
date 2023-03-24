@@ -21,7 +21,7 @@ class TestPythonNode(unittest.TestCase):
 
         self.assertEqual(node.id, "1c5d99792882409e97e132b3e9f814b0")
         self.assertEqual(node.engine, "CPython3")
-        self.assertEqual(node.checksum, "ec2c85a11ddbf8375da03f11272d427a")
+        self.assertEqual(node.checksum, "92d46019bf538072db6bd1287267c147")
         self.assertEqual(node.name, "Python Script")
         self.assertEqual(
             node.filename, "single_node_1c5d99792882409e97e132b3e9f814b0.py")
@@ -36,7 +36,7 @@ class TestPythonNode(unittest.TestCase):
 
         self.assertEqual(node.id, "1c5d99792882409e97e132b3e9f814b0")
         self.assertEqual(node.engine, "CPython3")
-        self.assertEqual(node.checksum, "8d9091d24788a6fdfa5e1e109298b50e")
+        self.assertEqual(node.checksum, "64a73c52bd213b6f1b593697cdde789b")
 
     def test_init_exception(self):
 
