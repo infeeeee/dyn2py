@@ -9,6 +9,14 @@ Use cases:
 
 ## Installation
 
+### Windows portable
+
+Prebuilt exe available from github releases.
+
+No requirements, just download `dyn2py.exe` from release assets:
+
+https://github.com/infeeeee/dyn2py/releases/latest
+
 ### With pip from Github
 
 Requirements: git, python, pip

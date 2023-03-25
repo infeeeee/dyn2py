@@ -371,7 +371,7 @@ class PythonFile(File):
     """A Python file, subclass of File()"""
 
     code: list[str]
-    """The python code."""
+    """The python code. Lines as list items, without newlines."""
     header_data: dict
     """Parsed dict from the header of a python file."""
     text: str
@@ -564,7 +564,7 @@ class PythonNode():
     engine: str
     """The engine of the node, IronPython2 or CPython3"""
     code: list[str]
-    """The full code"""
+    """The full code. Lines as list items, without newlines."""
     checksum: str
     """The checksum of the code, for checking changes"""
     name: str
@@ -572,7 +572,7 @@ class PythonNode():
     filename: pathlib.Path | str
     """The filename the node should be saved as, including the .py extension"""
     filepath: pathlib.Path
-    """The path is shoul"""
+    """The full path the node should be saved as"""
 
     def __init__(self,
                  node_dict_from_dyn: dict = {},

@@ -9,12 +9,14 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  build:
     runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v3
+        name: Checkout
       - uses: actions/setup-python@v4
+        name: Setup Python
         with:
           python-version: "3.11"
 
@@ -27,11 +29,30 @@ jobs:
         run: pyinstaller dyn2py.spec
 
       - uses: actions/upload-artifact@v3
+        name: Upload artifact
         with:
           name: dyn2py.exe
           path: dist/dyn2py.exe
 
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout
+      - name: Generate changelog
+        id: changelog
+        uses: metcalfc/changelog-generator@v4.1.0
+        with:
+          myToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dyn2py.exe
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/dyn2py.exe
+          files: dyn2py.exe
+          body: ${{ steps.modified.outputs.log }}
+
+  # TODO: pip
