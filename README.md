@@ -1,10 +1,10 @@
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/infeeeee/dyn2py?style=flat-square)
-![PyPI](https://img.shields.io/pypi/v/dyn2py?style=flat-square)
-![GitHub Release Date](https://img.shields.io/github/release-date/infeeeee/dyn2py?style=flat-square)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/infeeeee/dyn2py/main?style=flat-square)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/infeeeee/dyn2py/unittests.yml?label=tests&style=flat-square)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/infeeeee/dyn2py?style=flat-square)](https://github.com/infeeeee/dyn2py/releases/latest)
+[![PyPI](https://img.shields.io/pypi/v/dyn2py?style=flat-square)](https://pypi.org/project/dyn2py/)
+[![GitHub Release Date](https://img.shields.io/github/release-date/infeeeee/dyn2py?style=flat-square)](https://github.com/infeeeee/dyn2py/releases/latest)
+[![GitHub last commit (branch)](https://img.shields.io/github/last-commit/infeeeee/dyn2py/main?style=flat-square)](https://github.com/infeeeee/dyn2py/commits/main)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/infeeeee/dyn2py/unittests.yml?label=tests&style=flat-square)](https://github.com/infeeeee/dyn2py/actions/workflows/unittests.yml)
 ![GitHub top language](https://img.shields.io/github/languages/top/infeeeee/dyn2py?style=flat-square)
-![GitHub](https://img.shields.io/github/license/infeeeee/dyn2py?style=flat-square)
+[![GitHub](https://img.shields.io/github/license/infeeeee/dyn2py?style=flat-square)](https://github.com/infeeeee/dyn2py/blob/main/LICENSE)
 
 # dyn2py
 
