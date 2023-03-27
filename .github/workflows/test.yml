@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  reusable_workflow_job:
+  test:
     runs-on: ${{ inputs.os }}
     steps:
       - uses: actions/checkout@v3

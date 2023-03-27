@@ -14,7 +14,7 @@
 - [x] Tests on Linux
 - [x] Tests on Windows
 - [x] Windows Build
-- [ ] Pip
+- [x] Pip
 
 ## Documentation
 
