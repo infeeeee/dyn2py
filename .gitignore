@@ -7,3 +7,4 @@ dist
 docs
 tests/output_files
 Output
+dyn2py.exe

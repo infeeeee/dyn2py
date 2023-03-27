@@ -180,7 +180,7 @@ pyinstaller dyn2py.spec
 ### Create installer for Windows
 
 - Install Inno Setup: https://jrsoftware.org/isdl.php
-- The already built exe should be in `dist\dyn2py.exe`
+- The already built exe should be in the root folder
 - Run this in powershell:
 
 ```powershell

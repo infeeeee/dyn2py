@@ -19,7 +19,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dyn2py.exe
-          path: dist/dyn2py.exe
       - name: Update version number
         run: |
           $regex = Select-String -Path pyproject.toml -Pattern '^version = "((?:\d\.){2}\d)"$'
