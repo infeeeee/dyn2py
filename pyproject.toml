@@ -1,6 +1,6 @@
 [project]
 name = "dyn2py"
-version = "0.3.2"
+version = "0.3.3"
 description = "Extract python code from Dynamo graphs"
 readme = "README.md"
 requires-python = ">=3.8"
