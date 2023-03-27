@@ -208,6 +208,11 @@ To run them manually:
 python -m unittest discover -v -s ./tests -p "test_*.py"
 ```
 
+### New release
+
+1. Update version number in `pyproject.toml`
+2. Create a publish a git tag with that number
+
 ## License
 
 GPL-3.0

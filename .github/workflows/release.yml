@@ -60,7 +60,7 @@ jobs:
   pip:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: release
+    needs: test
     steps:
       - uses: actions/checkout@v3
         name: Checkout
