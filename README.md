@@ -3,7 +3,6 @@
 [![GitHub Release Date](https://img.shields.io/github/release-date/infeeeee/dyn2py?style=flat-square)](https://github.com/infeeeee/dyn2py/releases/latest)
 [![GitHub last commit (branch)](https://img.shields.io/github/last-commit/infeeeee/dyn2py/main?style=flat-square)](https://github.com/infeeeee/dyn2py/commits/main)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/infeeeee/dyn2py/unittests.yml?label=tests&style=flat-square)](https://github.com/infeeeee/dyn2py/actions/workflows/unittests.yml)
-![GitHub top language](https://img.shields.io/github/languages/top/infeeeee/dyn2py?style=flat-square)
 [![GitHub](https://img.shields.io/github/license/infeeeee/dyn2py?style=flat-square)](https://github.com/infeeeee/dyn2py/blob/main/LICENSE)
 
 # dyn2py
@@ -17,13 +16,15 @@ Use cases:
 
 ## Installation
 
-### Windows portable
+### Windows portable and installer
 
-Prebuilt exe available from github releases.
+Prebuilt portable exe and installer available from github releases.
 
-No requirements, just download `dyn2py.exe` from release assets:
+No requirements, just download `dyn2py.exe` or `dyn2py-installer.exe` from release assets:
 
 https://github.com/infeeeee/dyn2py/releases/latest
+
+Installer automatically adds the install folder to the path, so simply `dyn2py` can be called from anywhere.
 
 ### With pip
 
@@ -178,8 +179,8 @@ pyinstaller dyn2py.spec
 
 ### Create installer for Windows
 
-- The already built exe should be in `dist\dyn2py.exe`
 - Install Inno Setup: https://jrsoftware.org/isdl.php
+- The already built exe should be in `dist\dyn2py.exe`
 - Run this in powershell:
 
 ```powershell

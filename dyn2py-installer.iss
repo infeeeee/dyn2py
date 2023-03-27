@@ -20,7 +20,7 @@ ChangesEnvironment=yes
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "dist\dyn2py.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\dyn2py.exe"; DestDir: "{app}"; Flags: ignoreversion external
 
 
 [Code]

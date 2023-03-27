@@ -10,39 +10,29 @@ permissions:
 
 jobs:
   test:
+    name: Test
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
     uses: ./.github/workflows/test.yml
     with:
-      python-version: ${{ vars.PYTHON_VERSION}}
+      python-version: ${{ vars.PYTHON_VERSION }}
       os: ${{ matrix.os }}
 
-  build:
-    runs-on: windows-latest
+  build-exe:
+    name: Build Windows exe
     needs: test
-    steps:
-      - uses: actions/checkout@v3
-        name: Checkout
-      - uses: actions/setup-python@v4
-        name: Setup Python
-        with:
-          python-version: ${{ vars.PYTHON_VERSION}}
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install .[build]
-      - name: Build
-        run: pyinstaller dyn2py.spec
-      - uses: actions/upload-artifact@v3
-        name: Upload artifact
-        with:
-          name: dyn2py.exe
-          path: dist/dyn2py.exe
+    uses: ./.github/workflows/build-exe.yml
+
+  build-installer:
+    name: Build Windows installer
+    needs: build-exe
+    uses: ./.github/workflows/build-installer.yml
 
   release:
+    name: Create Github release
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-installer
     steps:
       - uses: actions/checkout@v3
         name: Checkout
@@ -51,17 +41,24 @@ jobs:
         uses: metcalfc/changelog-generator@v4.1.0
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download artifact
+      - name: Download exe
         uses: actions/download-artifact@v3
         with:
           name: dyn2py.exe
+      - name: Download installer
+        uses: actions/download-artifact@v3
+        with:
+          name: dyn2py-installer.exe
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dyn2py.exe
-          body: ${{ steps.modified.outputs.log }}
+          files: |
+            dyn2py.exe
+            dyn2py-installer.exe
+          body: ${{ steps.changelog.outputs.changelog }}
 
   pip:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: release
     steps:
@@ -70,7 +67,7 @@ jobs:
       - uses: actions/setup-python@v4
         name: Setup Python
         with:
-          python-version: ${{ vars.PYTHON_VERSION}}
+          python-version: ${{ vars.PYTHON_VERSION }}
       - name: Install deps
         run: |
           python -m pip install --upgrade pip

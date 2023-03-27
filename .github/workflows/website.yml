@@ -5,7 +5,6 @@ on:
     branches:
       - main
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 # security: restrict permissions for CI jobs.
@@ -18,19 +17,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build the documentation and upload the static HTML files as an artifact.
   build:
+    name: Build documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        name: Checkout
       - uses: actions/setup-python@v4
+        name: Setup Python
         with:
-          python-version: "3.11"
-
+          python-version: ${{ vars.PYTHON_VERSION }}
       - run: pip install -e .[doc]
+        name: Install deps
       - run: pdoc -d google -o docs dyn2py
-
+        name: Generate docs
       - uses: actions/upload-pages-artifact@v1
+        name: Upload artifact
         with:
           path: docs/
 
@@ -38,6 +40,7 @@ jobs:
   # This is a separate job so that only actions/deploy-pages has the necessary permissions.
   deploy:
     needs: build
+    name: Publish documentation
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -47,4 +50,5 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
+        name: Deploy page
         uses: actions/deploy-pages@v1

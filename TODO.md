@@ -15,6 +15,7 @@
 - [x] Tests on Windows
 - [x] Windows Build
 - [x] Pip
+- [x] Windows Installer
 
 ## Documentation
 
@@ -25,6 +26,5 @@
 
 ## Extra features maybe later
 
-- [ ] Windows Installer
 - [ ] Autocomplete
 - [ ] Winget
