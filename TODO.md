@@ -19,8 +19,8 @@
 ## Documentation
 
 - [x] API docs
-- [ ] Installation in readme
-- [ ] Terminal examples in readme
+- [x] Installation in readme
+- [x] Terminal examples in readme
 - [ ] About git hooks in readme
 
 ## Extra features maybe later

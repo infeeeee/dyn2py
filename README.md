@@ -1,3 +1,11 @@
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/infeeeee/dyn2py?style=flat-square)
+![PyPI](https://img.shields.io/pypi/v/dyn2py?style=flat-square)
+![GitHub Release Date](https://img.shields.io/github/release-date/infeeeee/dyn2py?style=flat-square)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/infeeeee/dyn2py/main?style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/infeeeee/dyn2py/unittests.yml?label=tests&style=flat-square)
+![GitHub top language](https://img.shields.io/github/languages/top/infeeeee/dyn2py?style=flat-square)
+![GitHub](https://img.shields.io/github/license/infeeeee/dyn2py?style=flat-square)
+
 # dyn2py
 
 Extract python code from Dynamo graphs
@@ -5,7 +13,7 @@ Extract python code from Dynamo graphs
 Use cases:
 
 - Track changes in python nodes in source control systems like git
-- Work on python code in your favorite code editor outside Dynamo. `dyn2py` can also update Dynamo graphs from the previously exported python files.
+- Work on python code in your favorite code editor outside Dynamo. `dyn2py` can also update Dynamo graphs from previously exported python files.
 
 ## Installation
 
@@ -17,14 +25,15 @@ No requirements, just download `dyn2py.exe` from release assets:
 
 https://github.com/infeeeee/dyn2py/releases/latest
 
-### With pip from Github
+### With pip
 
-Requirements: git, python, pip
+For usage as a module or as a command line program
+
+Requirements: python, pip
 
 ```
-pip install "dyn2py @ git+https://github.com/infeeeee/dyn2py"
+pip install dyn2py
 ```
-
 
 ## Usage
 
@@ -60,11 +69,39 @@ Do not move the source Dynamo graphs, or update won't work with them later.
 Multiple sources are supported, separate them by spaces.
 ```
 
+#### Examples
+
+*Notes: In Windows cmd use backward slashes as path separators, in any other shells use forward slashes. Powershell accepts both of them. Wrap paths with spaces in double quotes.*
+
+Extract all nodes next to a Dynamo file:
+
+```
+dyn2py path/to/dynamofile.dyn
+```
+
+Update a Dynamo file from previously exported and modified python files:
+
+```
+dyn2py --update path/to/dynamofile.dyn
+```
+
+Extract python nodes to a specific folder, process multiple Dynamo files:
+
+```
+dyn2py --python-folder path/to/pythonfiles path/to/dynamofile1.dyn path/to/dynamofile2.dyn
+```
+
+Update Dynamo files from python files from a folder. Only check python files, create backups:
+
+```
+dyn2py --filter py --backup path/to/pythonfiles
+```
+
 ### As a python module
 
 Full API documentation available here: https://infeeeee.github.io/dyn2py
 
-Most basic example to extract all nodes next to a dynamo file:
+Most basic example to extract all nodes next to a Dynamo file:
 
 ```python
 import dyn2py
@@ -94,11 +131,27 @@ python_files = dynamo_file.get_related_python_files(options)
 dynamo_file.write(options)
 ```
 
+For more examples check tests in the [tests folder on Github](https://github.com/infeeeee/dyn2py/tree/main/tests)
+
+They should work in Dynamo, inside CPython3 nodes.
+
+## Troubleshooting
+
+If you have a problem, open an [issue on Github](https://github.com/infeeeee/dyn2py/issues)
+
+You can also ask about this project on [Dynamo Forum](https://forum.dynamobim.com/), don't forget to ping me: [@infeeeee](https://forum.dynamobim.com/u/infeeeee)
+
+## Limitations
+
+Only supports Dynamo 2 files, Dynamo 1 files are reported and ignored. Please update them to Dynamo 2 by opening them in Dynamo 2.
+
+Both IronPython2 and CPython3 nodes are supported! IronPython2 nodes won't be updated to CPython3, they will be imported as-is.
+
 ## Development
 
 ### Installation
 
-Requirements: git, pip
+Requirements: git, python, pip
 
 ```
 git clone https://github.com/infeeeee/dyn2py
@@ -129,3 +182,18 @@ pyinstaller dyn2py.spec
 pip install -e .[doc]
 pdoc -d google dyn2py
 ```
+
+### Unit tests
+
+VSCode should automatically discover unit tests. 
+
+To run them manually:
+
+```
+python -m unittest discover -v -s ./tests -p "test_*.py"
+```
+
+## License
+
+GPL-3.0
+
