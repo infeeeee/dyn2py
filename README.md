@@ -169,13 +169,27 @@ venv .venv
 pip install -e .
 ```
 
-### Build
+### Build for Windows
 
 ```
 pip install -e .[build]
 pyinstaller dyn2py.spec
 ```
 
+### Create installer for Windows
+
+- The already built exe should be in `dist\dyn2py.exe`
+- Install Inno Setup: https://jrsoftware.org/isdl.php
+- Run this in powershell:
+
+```powershell
+# Read version number from pyproject.toml and update in innosetup:
+$regex = Select-String -Path pyproject.toml -Pattern '^version = "((?:\d\.){2}\d)"$'
+$version = $regex.Matches.Groups[1].Value
+(Get-Content dyn2py-installer.iss).Replace("x.x.x",$version) | Set-Content dyn2py-installer.iss
+# Build:
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" -Qp $(Join-Path $PWD.Path dyn2py-installer.iss)
+```
 ### Live module documentation
 
 ```
