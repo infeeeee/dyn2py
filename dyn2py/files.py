@@ -120,6 +120,7 @@ class File():
 
         Raises:
             TypeError: If called on a File object
+            FileNotFoundError: Target folder does not exist
         """
 
         if not options:
@@ -140,14 +141,20 @@ class File():
             backup_path = self.dirpath.joinpath(backup_filename)
             logging.info(f"Creating backup to {backup_path}")
             self.filepath.rename(backup_path)
+            if options.loglevel == "HEADLESS":
+                print(backup_path)
 
         # Call filetype specific methods:
         if options.dry_run:
             logging.info(
                 f"Should write file, but it's a dry-run: {self.filepath}")
         else:
+            if not self.dirpath.exists():
+                raise FileNotFoundError("File dir does not exist!")
             logging.info(f"Writing file: {self.filepath}")
             self._write_file()
+            if options.loglevel == "HEADLESS":
+                print(self.filepath)
 
     def _write_file(self):
         """Should be implemented in subclasses

@@ -45,6 +45,7 @@ def __command_line() -> None:
             The script by default overwrites older files with newer files.
             Do not move the source Dynamo graphs, or update won't work with them later.
             Multiple sources are supported, separate them by spaces.
+            HEADLESS loglevel only prints modified filenames.
             """)
     )
 
@@ -117,8 +118,13 @@ def run(options: Options) -> None:
     from_command_line = bool(inspect.stack()[1].function == "__command_line")
 
     # Set up logging:
+    if options.loglevel == "HEADLESS":
+        loglevel = "CRITICAL"
+    else:
+        loglevel = options.loglevel
+
     logging.basicConfig(format='%(levelname)s: %(message)s',
-                        level=options.loglevel)
+                        level=loglevel)
     logging.debug(f"Run options: {vars(options)}")
 
     # Set up sources:
@@ -197,4 +203,7 @@ def run(options: Options) -> None:
 
     # Write files at the end:
     for f in DynamoFile.open_files | PythonFile.open_files:
-        f.write(options)
+        try:
+            f.write(options)
+        except FileNotFoundError:
+            logging.error(f"Cannot save file! {f.filepath}")

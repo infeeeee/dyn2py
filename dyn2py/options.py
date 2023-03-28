@@ -3,7 +3,7 @@ import argparse
 import pathlib
 
 
-LOGLEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
+LOGLEVELS = ["HEADLESS", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 DEFAULT_LOGLEVEL = "INFO"
 FILTERS = ["py", "dyn"]
 

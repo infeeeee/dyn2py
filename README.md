@@ -53,7 +53,7 @@ options:
   -h, --help            show this help message and exit
   -v, --version         show program's version number and exit
   -l LOGLEVEL, --loglevel LOGLEVEL
-                        set log level, possible options: CRITICAL, ERROR, WARNING, INFO, DEBUG
+                        set log level, possible options: HEADLESS, CRITICAL, ERROR, WARNING, INFO, DEBUG
   -n, --dry-run         do not modify files, only show log
   -F, --force           overwrite even if the files are older
   -b, --backup          create a backup for updated files
@@ -68,6 +68,7 @@ dynamo options, only for processing Dynamo graphs:
 The script by default overwrites older files with newer files.
 Do not move the source Dynamo graphs, or update won't work with them later.
 Multiple sources are supported, separate them by spaces.
+HEADLESS loglevel only prints modified filenames.
 ```
 
 #### Examples
