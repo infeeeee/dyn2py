@@ -22,7 +22,7 @@
 - [x] API docs
 - [x] Installation in readme
 - [x] Terminal examples in readme
-- [ ] About git hooks in readme
+- [x] About git hooks in readme
 
 ## Extra features maybe later
 

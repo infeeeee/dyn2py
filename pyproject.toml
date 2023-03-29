@@ -34,3 +34,6 @@ dyn2py = "dyn2py:__command_line"
 
 [build-system]
 requires = ["setuptools", "wheel"]
+
+[tool.setuptools]
+packages = ["dyn2py"]

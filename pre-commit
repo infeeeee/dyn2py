@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Create a list of files from staged files:
+mapfile -t NEW_FILES <<<$(git diff --name-only --cached)
+
+# Go through staged files:
+for f in "${NEW_FILES[@]}"; do
+
+    # Export python files, only from Dynamo files.
+    # On Windows line ending is always CRLF, so remove CR with tr.
+    mapfile -t PY_FILES <<<$(dyn2py --force --filter dyn --loglevel HEADLESS "$f" | tr -d "\r")
+
+    # Check if something was exported:
+    if [[ "${PY_FILES[@]}" ]]; then
+
+        # Go through exported files:
+        for p in "${PY_FILES[@]}"; do
+
+            # Check if file exists:
+            if [ -f "$p" ]; then
+
+                # Stage file:
+                git add "$p"
+            fi
+        done
+    fi
+done

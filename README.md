@@ -75,29 +75,29 @@ HEADLESS loglevel only prints modified filenames.
 
 *Notes: In Windows cmd use backward slashes as path separators, in any other shells use forward slashes. Powershell accepts both of them. Wrap paths with spaces in double quotes.*
 
-Extract all nodes next to a Dynamo file:
-
-```
+```shell
+# Extract all nodes next to a Dynamo file:
 dyn2py path/to/dynamofile.dyn
-```
 
-Update a Dynamo file from previously exported and modified python files:
-
-```
+# Update a Dynamo file from previously exported and modified python files:
 dyn2py --update path/to/dynamofile.dyn
-```
 
-Extract python nodes to a specific folder, process multiple Dynamo files:
-
-```
+# Extract python nodes to a specific folder, process multiple Dynamo files:
 dyn2py --python-folder path/to/pythonfiles path/to/dynamofile1.dyn path/to/dynamofile2.dyn
-```
 
-Update Dynamo files from python files from a folder. Only check python files, create backups:
-
-```
+# Update Dynamo files from python files from a folder. Only check python files, create backups:
 dyn2py --filter py --backup path/to/pythonfiles
 ```
+
+#### Git hooks
+
+Git Hooks are a built-in feature of Git that allow developers to automate tasks throughout the Git workflow. Read more here: https://githooks.com/
+
+With the `pre-commit` hook it's possible to add more files to the currently initialized commit.
+
+You can find an example pre-commit hook here: [pre-commit](pre-commit). Copy this file to the `.git/hooks` folder of your repo of Dynamo graph. This folder is hidden by default, but it should exist in all initialized git repo. Do not rename this file.
+
+This script will go through staged `.dyn` files and export python scripts from them, and add them to the current commit. Now you can check check changed lines in a diff tool!
 
 ### As a python module
 
