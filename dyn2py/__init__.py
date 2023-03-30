@@ -199,7 +199,10 @@ def run(options: Options) -> None:
 
         elif f.is_python_file():
             logging.debug("Source is a Python file")
-            f.update_dynamo(options)
+            try:
+                f.update_dynamo(options)
+            except FileNotFoundError:
+                logging.error(f"Source Dynamo file not found! {f.filepath}")
 
     # Write files at the end:
     for f in DynamoFile.open_files | PythonFile.open_files:
