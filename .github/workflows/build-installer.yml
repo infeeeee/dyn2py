@@ -19,14 +19,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dyn2py.exe
-      - name: Update version number
+      - name: Build
         run: |
-          $regex = Select-String -Path pyproject.toml -Pattern '^version = "((?:\d\.){2}\d)"$'
-          $version = $regex.Matches.Groups[1].Value
-          (Get-Content dyn2py-installer.iss).Replace("x.x.x",$version) | Set-Content dyn2py-installer.iss
-      - name: Build installer
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" -Qp $(Join-Path $PWD.Path dyn2py-installer.iss)
+          .\dyn2py-installer.ps1
       - uses: actions/upload-artifact@v3
         name: Upload artifact
         with:
