@@ -11,7 +11,7 @@ if (Test-Path -Path ".\dist\dyn2py.exe" -PathType Leaf) {
 } 
 
 # Check if dyn2py.exe exists at all
-if (-not(Test-Path -Path ".\dist\dyn2py.exe" -PathType Leaf)) {
+if (-not(Test-Path -Path "dyn2py.exe" -PathType Leaf)) {
     throw "dyn2py.exe not found!"    
 }
 
