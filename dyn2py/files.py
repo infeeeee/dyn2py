@@ -137,7 +137,7 @@ class File():
         # Create backup:
         if not options.dry_run and self.filepath.exists() and options.backup:
             backup_filename = sanitize_filename(
-                f"{self.basename}_{self.mtimeiso}{self.extension}")
+                filename=f"{self.basename}_{self.mtimeiso}{self.extension}")
             backup_path = self.dirpath.joinpath(backup_filename)
             logging.info(f"Creating backup to {backup_path}")
             self.filepath.rename(backup_path)
