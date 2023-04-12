@@ -7,7 +7,8 @@ AppPublisherURL=https://github.com/infeeeee/dyn2py
 AppSupportURL=https://github.com/infeeeee/dyn2py/issues
 AppUpdatesURL=https://github.com/infeeeee/dyn2py/releases/latest
 DefaultDirName={autopf}\dyn2py
-DisableProgramGroupPage=yes
+DisableProgramGroupPage=auto
+DefaultGroupName=dyn2py
 LicenseFile=LICENSE
 PrivilegesRequired=admin
 OutputBaseFilename=dyn2py-installer
@@ -22,6 +23,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "dyn2py.exe"; DestDir: "{app}"; Flags: ignoreversion
 
+[Icons]
+Name: "{group}\dyn2py (cmd)"; Filename: "{cmd}"; WorkingDir: "{userdocs}"; Parameters: "/k dyn2py"
+Name: "{group}\dyn2py (powershell)"; Filename: "powershell"; WorkingDir: "{userdocs}"; Parameters: "-noexit -command dyn2py"
 
 [Code]
 const EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
