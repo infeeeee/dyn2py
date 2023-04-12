@@ -410,10 +410,10 @@ class PythonFile(File):
                 "Do not edit this section, if you want to update the Dynamo graph!"
             ])
 
-            # Double escape path:
-            dyn_path_string = str(dynamo_file.realpath)
+            # Calculate relative path, change to forward slash
+            dyn_path_string = os.path.relpath(dynamo_file.filepath, self.dirpath)
             if "\\" in dyn_path_string:
-                dyn_path_string = dyn_path_string.replace("\\", "\\\\")
+                dyn_path_string = dyn_path_string.replace("\\", "/")
 
             self.header_data = {
                 "dyn2py_version": METADATA["Version"],
@@ -548,8 +548,16 @@ class PythonFile(File):
         # Open if it's the first time:
         if not dynamo_file:
 
-            dynamo_file = DynamoFile(
-                pathlib.Path(self.header_data["dyn_path"]))
+            cwd = pathlib.Path(os.getcwd()).resolve()
+            # Change to pythonfiles' dir:
+            os.chdir(self.dirpath)
+            
+            dynpath = os.path.realpath(self.header_data["dyn_path"])
+            logging.debug(f"Resolved path: {dynpath}")
+            
+            # Change back to the original path:
+            os.chdir(cwd)
+            dynamo_file = DynamoFile(pathlib.Path(dynpath))
 
             # Check if uuid is ok:
             if not dynamo_file.uuid == self.header_data["dyn_uuid"]:
