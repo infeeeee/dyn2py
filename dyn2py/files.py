@@ -9,7 +9,6 @@ from decimal import Decimal
 from pathvalidate import sanitize_filename
 from importlib_metadata import metadata
 
-from dyn2py.exceptions import *
 from dyn2py.options import Options
 
 
@@ -19,6 +18,9 @@ HEADER_SEPARATOR = "*" * 60
 
 class File():
     """Base class for managing files"""
+
+    open_files: set[File] = set()
+    """A set of open files."""
 
     def __init__(self, filepath: pathlib.Path | str, read_from_disk: bool = True) -> None:
         """Generate a file object. If the path is correct it will become a DynamoFile or PythonFile object.
@@ -120,7 +122,7 @@ class File():
 
         Raises:
             TypeError: If called on a File object
-            FileNotFoundError: Target folder does not exist
+            File.Error: Target folder does not exist
         """
 
         if not options:
@@ -150,7 +152,7 @@ class File():
                 f"Should write file, but it's a dry-run: {self.filepath}")
         else:
             if not self.dirpath.exists():
-                raise FileNotFoundError("File dir does not exist!")
+                raise File.Error("File dir does not exist!", self)
             logging.info(f"Writing file: {self.filepath}")
             self._write_file()
             if options.loglevel == "HEADLESS":
@@ -165,6 +167,45 @@ class File():
         raise NotImplementedError(
             "Should be called only on DynamoFile and PythonFile objects!")
 
+    @classmethod
+    def get_open_files(cls) -> set:
+        """Get open files of this class and subclasses
+
+        Returns:
+            set: A set of open files
+        """
+        return {f for f in File.open_files if
+                isinstance(f, cls)}
+
+    @classmethod
+    def write_open_files(cls, options: Options | None = None) -> None:
+        """Write open files of this class and subclasses
+
+        Args:
+            options (Options | None, optional): Run options. Defaults to None.
+        """
+        if not options:
+            options = Options()
+
+        for f in cls.get_open_files():
+            f.write(options)
+
+    @classmethod
+    def close_open_files(cls) -> None:
+        """Close open files of this class and subclasses"""
+        File.open_files = File.open_files - cls.get_open_files()
+
+    class Error(Exception):
+        def __init__(self, message: str, file: File) -> None:
+            """There is some problem with this file
+
+            Args:
+                message (str): The message to display
+                file (File): The problem File
+            """
+            super().__init__(message)
+            self.file = file
+
 
 class DynamoFile(File):
     """A Dynamo file, subclass of File()"""
@@ -177,9 +218,6 @@ class DynamoFile(File):
     """The name of the graph, read from the file, not the filename"""
     python_nodes: set[PythonNode]
     """Python node objects, read from this file."""
-
-    open_files: set[DynamoFile] = set()
-    """A set of open Dynamo files, before saving. Self added by read()"""
 
     def extract_python(self, options: Options | None = None) -> list[PythonFile]:
         """Extract python files from Dynamo graphs, add them to open_files
@@ -229,9 +267,9 @@ class DynamoFile(File):
 
         Raises:
             FileNotFoundError: The file does not exist
-            DynamoFileException: If the file is a Dynamo 1 file
+            DynamoFile.Error: If the file is a Dynamo 1 file
             json.JSONDecodeError: If there are any other problem with the file
-            PythonNodeNotFoundException: No python nodes in the file
+            DynamoFile.PythonNodeNotFound: No python nodes in the file
         """
 
         if not self.exists:
@@ -249,7 +287,7 @@ class DynamoFile(File):
             except json.JSONDecodeError as e:
                 with open(self.filepath, "r", encoding="utf-8") as input_json:
                     if input_json.readline().startswith("<Workspace Version="):
-                        raise DynamoFileException("This is a Dynamo 1 file!")
+                        raise self.Error("This is a Dynamo 1 file!", self)
                     else:
                         raise e
 
@@ -264,8 +302,8 @@ class DynamoFile(File):
             node_views = self.full_dict["View"]["NodeViews"]
 
             if not full_python_nodes:
-                raise PythonNodeNotFoundException(
-                    "No python nodes in this file!")
+                raise self.PythonNodeNotFound(
+                    "No python nodes in this file!", self, "")
 
             self.python_nodes = set()
 
@@ -286,7 +324,7 @@ class DynamoFile(File):
             PythonNode: The PythonNode with the given id
 
         Raises:
-            PythonNodeNotFoundException: No python node with this id
+            DynamoFile.PythonNodeNotFound: No python node with this id
         """
 
         python_node = next((
@@ -294,8 +332,8 @@ class DynamoFile(File):
         ), None)
 
         if not python_node:
-            raise PythonNodeNotFoundException(
-                f"Node not found with id {node_id}")
+            raise self.PythonNodeNotFound(
+                "Node not found", self, node_id)
 
         return python_node
 
@@ -306,7 +344,7 @@ class DynamoFile(File):
             python_node (PythonNode): The new node
 
         Raises:
-            PythonNodeNotFoundException: Existing node not found
+            DynamoFile.PythonNodeNotFound: Existing node not found
         """
 
         # Find the old node:
@@ -316,8 +354,9 @@ class DynamoFile(File):
             n for n in self.full_dict["Nodes"] if n["Id"] == python_node.id
         ), {})
 
-        if not node_dict or not python_node_in_file:
-            raise PythonNodeNotFoundException()
+        if not node_dict:
+            raise self.PythonNodeNotFound(
+                "Existing node not found in file", self, python_node.id)
 
         # Remove the old and add the new:
         self.python_nodes.remove(python_node_in_file)
@@ -368,10 +407,23 @@ class DynamoFile(File):
         Returns:
             DynamoFile: The file. None if not found
         """
-        f = next((d for d in DynamoFile.open_files if d.uuid == uuid), None)
+        f = next((d for d in DynamoFile.get_open_files() if d.uuid == uuid), None)
         if f:
             logging.debug(f"Found open file {f.uuid}")
         return f
+
+    class PythonNodeNotFound(Exception):
+        def __init__(self, message: str, file: DynamoFile, node_id: str) -> None:
+            """Python node not found with this id
+
+            Args:
+                message (str): The message to display
+                file (DynamoFile): The problem DynamoFile
+                node_id (str): The missing id
+            """
+            super().__init__(message)
+            self.file = file
+            self.node_id = node_id
 
 
 class PythonFile(File):
@@ -383,9 +435,6 @@ class PythonFile(File):
     """Parsed dict from the header of a python file."""
     text: str
     """Full contents of the file."""
-
-    open_files: set[PythonFile] = set()
-    """A set of open Python files."""
 
     def __init__(self,
                  filepath: pathlib.Path | str,
@@ -411,7 +460,8 @@ class PythonFile(File):
             ])
 
             # Calculate relative path, change to forward slash
-            dyn_path_string = os.path.relpath(dynamo_file.filepath, self.dirpath)
+            dyn_path_string = os.path.relpath(
+                dynamo_file.filepath, self.dirpath)
             if "\\" in dyn_path_string:
                 dyn_path_string = dyn_path_string.replace("\\", "/")
 
@@ -458,7 +508,7 @@ class PythonFile(File):
 
         Raises:
             FileNotFoundError: The file does not exist
-            PythonFileException: Some error reading the file
+            PythonFile.Error: Some error reading the file
         """
         if not self.exists:
             raise FileNotFoundError
@@ -493,7 +543,7 @@ class PythonFile(File):
                     # Find the location of the separator
                     sl = line.find(":")
                     if sl == -1:
-                        raise PythonFileException("Error reading header!")
+                        raise self.Error("Error reading header!", self)
                     self.header_data[line[0:sl]] = line[sl+1:]
 
             self.code = python_lines[code_start_line:]
@@ -535,7 +585,7 @@ class PythonFile(File):
         """Get the source Dynamo file of this PythonFile
 
         Raises:
-            DynamoFileException: The uuid of the dynamo file changed
+            DynamoFile.Error: The uuid of the dynamo file changed
 
         Returns:
             DynamoFile: The DynamoFile
@@ -551,17 +601,18 @@ class PythonFile(File):
             cwd = pathlib.Path(os.getcwd()).resolve()
             # Change to pythonfiles' dir:
             os.chdir(self.dirpath)
-            
+
             dynpath = os.path.realpath(self.header_data["dyn_path"])
             logging.debug(f"Resolved path: {dynpath}")
-            
+
             # Change back to the original path:
             os.chdir(cwd)
             dynamo_file = DynamoFile(pathlib.Path(dynpath))
 
             # Check if uuid is ok:
             if not dynamo_file.uuid == self.header_data["dyn_uuid"]:
-                raise DynamoFileException(f"Dynamo graph uuid changed!")
+                raise DynamoFile.Error(
+                    "Dynamo graph uuid changed!", dynamo_file)
 
         return dynamo_file
 
@@ -602,7 +653,7 @@ class PythonNode():
             python_file (PythonFile, optional): The python file to be converted to node. Defaults to None.
 
         Raises:
-            PythonNodeException: Wrong arguments were given
+            Error: Wrong arguments were given
         """
         # Initialize from dynamo file:
         if node_dict_from_dyn and dynamo_file and not python_file:
@@ -642,9 +693,18 @@ class PythonNode():
             self.filename = python_file.basename + ".py"
             self.filepath = python_file.filepath
 
+        elif python_file and node_dict_from_dyn and dynamo_file:
+            raise self.Error("Too much arguments given!")
+
+        elif not python_file and not node_dict_from_dyn and not dynamo_file:
+            raise self.Error("No arguments given!")
+
         else:
-            raise PythonNodeException
+            raise self.Error("Something wrong!")
 
         # Calculate checksum:
         checksums = [hashlib.md5(l.encode()).hexdigest() for l in self.code]
         self.checksum = hashlib.md5("".join(checksums).encode()).hexdigest()
+
+    class Error(Exception):
+        pass

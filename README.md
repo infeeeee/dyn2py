@@ -109,8 +109,8 @@ Most basic example to extract all nodes next to a Dynamo file:
 import dyn2py
 
 dynamo_file = dyn2py.DynamoFile("path/to/dynamofile.dyn")
-python_files = dynamo_file.extract_python()
-[python_file.write() for python_file in python_files]
+dynamo_file.extract_python()
+dyn2py.PythonFile.write_open_files()
 ```
 
 Change options like with the command line switches with the `Options` class:

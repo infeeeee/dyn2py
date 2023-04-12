@@ -19,7 +19,7 @@ class TestDynamoFile(unittest.TestCase):
         self.assertTrue(dyn in dyn2py.DynamoFile.open_files)
 
         # Dynamo 1 file:
-        with self.assertRaises(dyn2py.DynamoFileException):
+        with self.assertRaises(dyn2py.DynamoFile.Error):
             dyn1 = dyn2py.DynamoFile(f"{INPUT_DIR}/dynamo1file.dyn")
 
         # Not existing file:
@@ -27,7 +27,7 @@ class TestDynamoFile(unittest.TestCase):
             dyn2 = dyn2py.DynamoFile(f"{INPUT_DIR}/not_existing.dyn")
 
         # No python nodes:
-        with self.assertRaises(dyn2py.PythonNodeNotFoundException):
+        with self.assertRaises(dyn2py.DynamoFile.PythonNodeNotFound):
             dyn2 = dyn2py.DynamoFile(f"{INPUT_DIR}/no_python.dyn")
 
     def test_get_python_nodes(self):
@@ -39,7 +39,7 @@ class TestDynamoFile(unittest.TestCase):
         self.assertIn(py_node, dyn.python_nodes)
         self.assertEqual(py_node.checksum, "e830a6ae6b395bcfd4e5a40da48f3bfc")
 
-        with self.assertRaises(dyn2py.PythonNodeNotFoundException):
+        with self.assertRaises(dyn2py.DynamoFile.PythonNodeNotFound):
             dyn.get_python_node_by_id("wrongid")
 
     def test_extract_python(self):
@@ -50,10 +50,9 @@ class TestDynamoFile(unittest.TestCase):
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
         dyn.extract_python(options=opt)
 
-        self.assertEqual(len(dyn2py.PythonFile.open_files), 6)
+        self.assertEqual(len(dyn2py.PythonFile.get_open_files()), 6)
 
-        for f in dyn2py.PythonFile.open_files:
-            f.write()
+        dyn2py.PythonFile.write_open_files()
 
         output_dir = pathlib.Path(OUTPUT_DIR)
         self.assertEqual(len(list(output_dir.iterdir())), 6)
@@ -139,6 +138,6 @@ class TestDynamoFile(unittest.TestCase):
         self.assertTrue(node2)
         self.assertEqual(node1.checksum, node2.checksum)
 
-        with self.assertRaises(dyn2py.PythonNodeNotFoundException):
+        with self.assertRaises(dyn2py.DynamoFile.PythonNodeNotFound):
             node2.id = "wrong_id"
             dyn2.update_python_node(node2)

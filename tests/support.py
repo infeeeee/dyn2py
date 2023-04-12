@@ -31,8 +31,7 @@ def extract_single_node_dyn(modify_py: bool = False):
     pythonfiles = dyn.extract_python(options)
     pythonfiles[0].write()
 
-    dyn2py.PythonFile.open_files.clear()
-    dyn2py.DynamoFile.open_files.clear()
+    dyn2py.File.open_files.clear()
 
     if modify_py:
         # Open the extracted file and replace a string:
