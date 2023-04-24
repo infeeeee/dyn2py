@@ -24,8 +24,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "dyn2py.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\dyn2py (cmd)"; Filename: "{cmd}"; WorkingDir: "{userdocs}"; Parameters: "/k dyn2py"
-Name: "{group}\dyn2py (powershell)"; Filename: "powershell"; WorkingDir: "{userdocs}"; Parameters: "-noexit -command dyn2py"
+Name: "{group}\dyn2py (cmd)"; Filename: "{cmd}"; WorkingDir: "{userdocs}"; Parameters: "/k dyn2py -h"
+Name: "{group}\dyn2py (powershell)"; Filename: "powershell"; WorkingDir: "{userdocs}"; Parameters: "-noexit -command dyn2py -h"
 
 [Code]
 const EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
