@@ -8,8 +8,6 @@ from tests.support import *
 
 class TestFile(unittest.TestCase):
 
-    # Write methods should be tested in subclasses!
-
     def test_init(self):
         paths = [
             f"{INPUT_DIR}/python_nodes.dyn",
@@ -71,7 +69,7 @@ class TestFile(unittest.TestCase):
         nonexisting_file = dyn2py.File(f"{INPUT_DIR}/new_file.py")
 
         # Extract a python file so it is always newer than the others:
-        cleanup_output_dir()
+        cleanup_dirs()
         opt = dyn2py.Options(python_folder=OUTPUT_DIR)
         older_file.extract_python(options=opt)  # type: ignore
         for f in dyn2py.PythonFile.open_files:
@@ -103,3 +101,15 @@ class TestFile(unittest.TestCase):
 
             self.assertEqual(file.is_dynamo_file(), f == "dyn")
             self.assertEqual(file.is_python_file(), f == "py")
+
+    def test_write(self):
+
+        # new empty file:
+        empty_filepath = pathlib.Path(f"{OUTPUT_DIR}/empty.txt")
+        empty_filepath.touch()
+
+        empty_file = dyn2py.File(f"{OUTPUT_DIR}/empty.txt")
+        
+        self.assertTrue(empty_file.exists)
+        with self.assertRaises(TypeError):
+            empty_file.write()

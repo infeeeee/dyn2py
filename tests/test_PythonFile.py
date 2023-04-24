@@ -12,9 +12,10 @@ class TestPythonFile(unittest.TestCase):
     def test_init(self):
         extract_single_node_dyn()
 
-        py1 = dyn2py.PythonFile(f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
+        dyn2py.File.open_files.clear()
 
-        dyn2py.DynamoFile.open_files.clear()
+        py1 = dyn2py.PythonFile(
+            f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
         dyn = dyn2py.DynamoFile(f"{INPUT_DIR}/single_node.dyn")
         node = list(dyn.python_nodes)[0]
         py2 = dyn2py.PythonFile(filepath=node.filepath,
@@ -23,9 +24,10 @@ class TestPythonFile(unittest.TestCase):
         for py in [py1, py2]:
 
             self.assertEqual(len(py.code), 17)
-            self.assertEqual(len(py.text.split(os.linesep)), 32, msg=py.filepath)
+            self.assertEqual(len(py.text.split(os.linesep)),
+                             32, msg=py.filepath)
             self.assertIs(type(py.header_data), dict)
-            self.assertTrue(py in dyn2py.PythonFile.open_files)
+            self.assertTrue(py in dyn2py.PythonFile.get_open_files())
 
     def test_update_dynamo(self):
         extract_single_node_dyn(modify_py=True)
@@ -68,14 +70,13 @@ class TestPythonFile(unittest.TestCase):
 
     def test_get_source_dynamo_file(self):
         extract_single_node_dyn()
-        dyn2py.DynamoFile.open_files.clear()
-        dyn2py.PythonFile.open_files.clear()
+        dyn2py.File.open_files.clear()
 
         py1 = dyn2py.PythonFile(
             f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
 
         dyn1 = py1.get_source_dynamo_file()
-        self.assertEqual(len(dyn2py.DynamoFile.open_files), 1)
+        self.assertEqual(len(dyn2py.DynamoFile.get_open_files()), 1)
         self.assertIn(dyn1, dyn2py.DynamoFile.open_files)
 
         dyn2 = py1.get_source_dynamo_file()
@@ -83,14 +84,13 @@ class TestPythonFile(unittest.TestCase):
 
         dyn2py.DynamoFile.open_files.clear()
 
-        with self.assertRaises(dyn2py.DynamoFileException):
+        with self.assertRaises(dyn2py.DynamoFile.Error):
             py1.header_data["dyn_uuid"] = "wrong-uuid"
             py1.get_source_dynamo_file()
 
     def test_write(self):
         extract_single_node_dyn()
-        dyn2py.DynamoFile.open_files.clear()
-        dyn2py.PythonFile.open_files.clear()
+        dyn2py.File.open_files.clear()
 
         py1 = dyn2py.PythonFile(
             f"{OUTPUT_DIR}/single_node_1c5d99792882409e97e132b3e9f814b0.py")
@@ -98,7 +98,7 @@ class TestPythonFile(unittest.TestCase):
         dyn1 = py1.get_source_dynamo_file()
         node = list(dyn1.python_nodes)[0]
         py2 = dyn2py.PythonFile(
-            node.filepath, dynamo_file=dyn1, python_node=node)
+            f"{OUTPUT_DIR}/{node.filename}", dynamo_file=dyn1, python_node=node)
         self.assertIsNot(py1, py2)
         self.assertEqual(py1.code, py2.code)
         for d in py1.header_data:

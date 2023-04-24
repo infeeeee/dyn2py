@@ -22,11 +22,7 @@ __all__ = [
     "File",
     "DynamoFile",
     "PythonFile",
-    "PythonNode",
-    "DynamoFileException",
-    "PythonNodeNotFoundException",
-    "PythonNodeException",
-    "PythonFileException"
+    "PythonNode"
 ]
 
 
@@ -155,13 +151,13 @@ def run(options: Options) -> None:
     for f in source_files:
         try:
             files.append(File(f))
-        except DynamoFileException as e:
+        except DynamoFile.Error as e:
             # It's a dynamo1 file
-            logging.warning(e)
+            logging.warning(f"This is a Dynamo 1 file! {e.file.filepath}")
             continue
-        except PythonNodeNotFoundException as e:
-            # No python node in this file
-            logging.warning(e)
+        except DynamoFile.PythonNodeNotFound as e:
+            # No python nodes in this file
+            logging.warning(f"This file has no Python nodes! {e.file.filepath} ")
             continue
 
     # Dynamo files come first, sort sources:
@@ -202,11 +198,10 @@ def run(options: Options) -> None:
             try:
                 f.update_dynamo(options)
             except FileNotFoundError:
-                logging.error(f"Source Dynamo file not found! {f.filepath}")
+                logging.error(f"{f.filepath} Source Dynamo file not found! ")
 
     # Write files at the end:
-    for f in DynamoFile.open_files | PythonFile.open_files:
-        try:
-            f.write(options)
-        except FileNotFoundError:
-            logging.error(f"Cannot save file! {f.filepath}")
+    try:
+        File.write_open_files(options)
+    except File.Error as e:
+        logging.error(f"Cannot save file! {e.file.filepath}")

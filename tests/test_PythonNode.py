@@ -48,11 +48,12 @@ class TestPythonNode(unittest.TestCase):
 
         py = dyn2py.PythonFile(f"{OUTPUT_DIR}/single_node_mod.py")
 
-        with self.assertRaises(dyn2py.PythonNodeException):
+        with self.assertRaises(dyn2py.PythonNode.Error):
             node1 = dyn2py.PythonNode(
                 node_dict_from_dyn=node_dict,
                 dynamo_file=dyn,
                 python_file=py
             )
-
+        
+        with self.assertRaises(dyn2py.PythonNode.Error):
             node2 = dyn2py.PythonNode()

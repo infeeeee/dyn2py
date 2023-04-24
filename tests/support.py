@@ -3,15 +3,17 @@ import dyn2py
 
 INPUT_DIR = "tests/input_files"
 OUTPUT_DIR = "tests/output_files"
+TEMP_DIR = "tests/temp_files"
 
 
-def cleanup_output_dir():
-    output_dir = pathlib.Path(OUTPUT_DIR)
-    if output_dir.exists():
-        for f in output_dir.iterdir():
-            f.unlink()
-    else:
-        output_dir.mkdir()
+def cleanup_dirs():
+    for p in [OUTPUT_DIR, TEMP_DIR]:
+        the_dir = pathlib.Path(p)
+        if the_dir.exists():
+            for f in the_dir.iterdir():
+                f.unlink()
+        else:
+            the_dir.mkdir()
 
 
 def extract_single_node_dyn(modify_py: bool = False):
@@ -23,7 +25,7 @@ def extract_single_node_dyn(modify_py: bool = False):
         modify_py (bool, optional): Also do some changes on the exported file. Defaults to False.
 
     """
-    cleanup_output_dir()
+    cleanup_dirs()
 
     # Extract py:
     options = dyn2py.Options(python_folder=OUTPUT_DIR)
@@ -31,8 +33,7 @@ def extract_single_node_dyn(modify_py: bool = False):
     pythonfiles = dyn.extract_python(options)
     pythonfiles[0].write()
 
-    dyn2py.PythonFile.open_files.clear()
-    dyn2py.DynamoFile.open_files.clear()
+    dyn2py.File.open_files.clear()
 
     if modify_py:
         # Open the extracted file and replace a string:
