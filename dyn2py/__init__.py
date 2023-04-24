@@ -202,6 +202,6 @@ def run(options: Options) -> None:
 
     # Write files at the end:
     try:
-        File.write_open_files()
+        File.write_open_files(options)
     except File.Error as e:
         logging.error(f"Cannot save file! {e.file.filepath}")

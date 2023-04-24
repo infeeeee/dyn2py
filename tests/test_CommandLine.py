@@ -46,6 +46,15 @@ class TestCommandLine(unittest.TestCase):
 
     @staticmethod
     def run_command(args: list = []) -> dict:
+        """_summary_
+
+        Args:
+            args (list, optional): list of arguments to run. Defaults to [].
+
+        Returns:
+            dict["stderr"]: error message
+            dict["python_file_mtimes"]: exported file in the output dir, and modification times
+        """
         argstring = " ".join(args)
         process = subprocess.run(f"dyn2py -l WARNING {argstring}",
                                  capture_output=True, shell=True)
@@ -138,9 +147,11 @@ class TestCommandLine(unittest.TestCase):
                     shutil.copy(f"{INPUT_DIR}/{filename}",
                                 f"{OUTPUT_DIR}/{filename}")
 
+            # Open files normally
             file_open = self.run_command(
                 [s["pfolder_arg"], s['filepath']])
 
+            # Open without error:
             self.assertFalse(
                 bool(file_open["stderr"]), msg=file_open["stderr"])
             self.assertEqual(
@@ -150,10 +161,12 @@ class TestCommandLine(unittest.TestCase):
             file_no_overwrite = self.run_command(
                 [s["pfolder_arg"], s['filepath']])
 
+            # Should give error, because they already exist:
             self.assertTrue(bool(file_no_overwrite["stderr"]))
             self.assertEqual(
                 len(file_no_overwrite["python_file_mtimes"]), s["py_file_count"])
 
+            # The modify time shouldn't change as they were not overwritten:
             for p in file_no_overwrite["python_file_mtimes"]:
                 self.assertEqual(
                     file_no_overwrite["python_file_mtimes"][p], file_open["python_file_mtimes"][p])
@@ -162,10 +175,12 @@ class TestCommandLine(unittest.TestCase):
             file_force = self.run_command(
                 [s["pfolder_arg"], s["force_arg"], s['filepath']])
 
+            # Should not have an error:
             self.assertFalse(bool(file_force["stderr"]))
             self.assertEqual(
                 len(file_force["python_file_mtimes"]), s["py_file_count"])
 
+            #Modify time should be higher as they were replaced
             for p in file_force["python_file_mtimes"]:
                 self.assertTrue(
                     file_force["python_file_mtimes"][p] > file_open["python_file_mtimes"][p]
@@ -178,7 +193,9 @@ class TestCommandLine(unittest.TestCase):
             self.assertFalse(bool(file_backup["stderr"]))
 
             self.assertEqual(
-                len(file_backup["python_file_mtimes"]), s["py_file_count"] * 2)
+                len(file_backup["python_file_mtimes"]), s["py_file_count"] * 2, 
+                msg=f""
+                )
 
             for p in file_force["python_file_mtimes"]:
                 self.assertTrue(

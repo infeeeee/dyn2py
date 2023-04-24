@@ -112,21 +112,26 @@ class File():
         """
         return bool(self.extension == ".py")
 
-    def write(self, options: Options | None = None) -> None:
+    def write(self, options: Options | None = None, **option_args) -> None:
         """Prepare writing file to the disk:
             create backup, process dry-run, call filetype specific write_file() methods
             Should be called on subclasses!
 
         Args:
             options (Options | None, optional): Run options. Defaults to None.
+            **option_args: Options() arguments
 
         Raises:
+            ValueError: Both options and other arguments given
             TypeError: If called on a File object
             File.Error: Target folder does not exist
         """
 
         if not options:
-            options = Options()
+            options = Options.from_kwargs(kwargs=option_args)
+        elif option_args:
+            # Should not give both options and arguments:
+            raise ValueError("Options object and extra arguments!")
 
         # This should only work on subclasses:
         if type(self).__name__ == "File":
@@ -178,14 +183,22 @@ class File():
                 isinstance(f, cls)}
 
     @classmethod
-    def write_open_files(cls, options: Options | None = None) -> None:
+    def write_open_files(cls, options: Options | None = None, **option_args) -> None:
         """Write open files of this class and subclasses
 
         Args:
             options (Options | None, optional): Run options. Defaults to None.
+            **option_args: Options() arguments
+
+        Raises:
+            ValueError: Both options and other arguments given
+
         """
         if not options:
-            options = Options()
+            options = Options.from_kwargs(kwargs=option_args)
+        elif option_args:
+            # Should not give both options and arguments:
+            raise ValueError("Options object and extra arguments!")
 
         for f in cls.get_open_files():
             f.write(options)
@@ -219,18 +232,25 @@ class DynamoFile(File):
     python_nodes: set[PythonNode]
     """Python node objects, read from this file."""
 
-    def extract_python(self, options: Options | None = None) -> list[PythonFile]:
+    def extract_python(self, options: Options | None = None, **option_args) -> list[PythonFile]:
         """Extract python files from Dynamo graphs, add them to open_files
 
         Args:
             options (Options | None, optional): Run options. Defaults to None.
+            **option_args: Options() arguments
+
+        Raises:
+            ValueError: Both options and other arguments given
 
         Returns:
             list[PythonFile]: List of PythonFile objects extracted from this DynamoFile
         """
 
         if not options:
-            options = Options()
+            options = Options.from_kwargs(kwargs=option_args)
+        elif option_args:
+            # Should not give both options and arguments:
+            raise ValueError("Options object and extra arguments!")
 
         logging.info(f"Extracting from file: {self.filepath}")
         python_files = []
@@ -372,17 +392,24 @@ class DynamoFile(File):
         with open(self.filepath, "w", encoding="utf-8", newline="") as output_file:
             json.dump(self.full_dict, output_file, indent=2,  use_decimal=True)
 
-    def get_related_python_files(self, options: Options | None = None) -> list[PythonFile]:
+    def get_related_python_files(self, options: Options | None = None, **option_args) -> list[PythonFile]:
         """Get python files exported from this Dynamo file
 
         Args:
             options (Options | None, optional): Run options. Defaults to None.
+            **option_args: Options() arguments
+
+        Raises:
+            ValueError: Both options and other arguments given
 
         Returns:
             list[PythonFile]: A list of PythonFile objects
         """
         if not options:
-            options = Options()
+            options = Options.from_kwargs(kwargs=option_args)
+        elif option_args:
+            # Should not give both options and arguments:
+            raise ValueError("Options object and extra arguments!")
 
         # Find the folder of the python files
         if options.python_folder:
@@ -552,15 +579,23 @@ class PythonFile(File):
             logging.debug(f"Header data from python file: {self.header_data}")
             # logging.debug(f"Code from python file: {self.code}")
 
-    def update_dynamo(self, options: Options | None = None) -> None:
+    def update_dynamo(self, options: Options | None = None, **option_args) -> None:
         """Update a the source Dynamo graph from this python script
 
         Args:
             options (Options | None, optional): Run options. Defaults to None.
+            **option_args: Options() arguments
+
+        Raises:
+            ValueError: Both options and other arguments given
+
         """
 
         if not options:
-            options = Options()
+            options = Options.from_kwargs(kwargs=option_args)
+        elif option_args:
+            # Should not give both options and arguments:
+            raise ValueError("Options object and extra arguments!")
 
         dynamo_file = self.get_source_dynamo_file()
 
@@ -653,7 +688,7 @@ class PythonNode():
             python_file (PythonFile, optional): The python file to be converted to node. Defaults to None.
 
         Raises:
-            Error: Wrong arguments were given
+            PythonNode.Error: Wrong arguments were given
         """
         # Initialize from dynamo file:
         if node_dict_from_dyn and dynamo_file and not python_file:
@@ -707,4 +742,5 @@ class PythonNode():
         self.checksum = hashlib.md5("".join(checksums).encode()).hexdigest()
 
     class Error(Exception):
+        """Something wrong with this node"""
         pass

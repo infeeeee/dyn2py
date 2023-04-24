@@ -91,46 +91,66 @@ dyn2py --filter py --backup path/to/pythonfiles
 
 #### Git hooks
 
-Git Hooks are a built-in feature of Git that allow developers to automate tasks throughout the Git workflow. Read more here: https://githooks.com/
+Git hooks are a built-in feature of Git that allow developers to automate tasks throughout the Git workflow. Read more here: https://githooks.com/
 
 With the `pre-commit` hook it's possible to add more files to the currently initialized commit.
 
-You can find an example pre-commit hook here: [pre-commit](pre-commit). Copy this file to the `.git/hooks` folder of your repo of Dynamo graph. This folder is hidden by default, but it should exist in all initialized git repo. Do not rename this file.
+You can find an example pre-commit hook here: [pre-commit](pre-commit). Copy this file to the `.git/hooks` folder of your repo of Dynamo graphs. This folder is hidden by default, but it should exist in all initialized git repo. Do not rename this file.
 
-This script will go through staged `.dyn` files and export python scripts from them, and add them to the current commit. Now you can check check changed lines in a diff tool!
+This script will go through staged `.dyn` files and export python scripts from them, and add them to the current commit. Now you can check changed lines in a diff tool, you can see changed python code in a PR!
 
 ### As a python module
 
 Full API documentation available here: https://infeeeee.github.io/dyn2py
 
-Most basic example to extract all nodes next to a Dynamo file:
+#### Examples
+
+Extract all nodes from python nodes next to a Dynamo file:
 
 ```python
 import dyn2py
 
+# Open a Dynamo graph:
 dynamo_file = dyn2py.DynamoFile("path/to/dynamofile.dyn")
+
+# Extract python nodes:
 dynamo_file.extract_python()
+
+# Save all python nodes as separate files:
 dyn2py.PythonFile.write_open_files()
 ```
 
-Change options like with the command line switches with the `Options` class:
+Update python node from a python file:
 
 ```python
 import dyn2py
 
-# Create a backup on overwrite, read python files from a different folder:
-options = dyn2py.Options(
-    backup=True,
-    python_folder="path/to/pythonfiles")
+# Open a python file:
+python_file = dyn2py.PythonFile("path/to/pythonfile.py")
 
+# Update the node in the graph:
+python_file.update_dynamo()
+
+# Save modified Dynamo graph:
+dyn2py.DynamoFile.write_open_files()
+```
+
+Update all python nodes of a Dynamo grapg from a different folder, save backups:
+
+```python
+import dyn2py
+
+# open a Dynamo graph:
 dynamo_file = dyn2py.DynamoFile("path/to/dynamofile.dyn")
-python_files = dynamo_file.get_related_python_files(options)
+
+# Get python files from a dofferent folder:
+python_files = dynamo_file.get_related_python_files(python_folder="path/to/pythonfiles")
 
 # Read python files and update the graph:
-[python_file.update_dynamo(options) for python_file in python_files]
+[python_file.update_dynamo() for python_file in python_files]
 
-# Don't forget to save at the end:
-dynamo_file.write(options)
+# Save open Dynamo graphs:
+dyn2py.DynamoFile.write_open_files(backup=True)
 ```
 
 For more examples check tests in the [tests folder on Github](https://github.com/infeeeee/dyn2py/tree/main/tests)
@@ -149,6 +169,8 @@ Only supports Dynamo 2 files, Dynamo 1 files are reported and ignored. Please up
 
 Both IronPython2 and CPython3 nodes are supported! IronPython2 nodes won't be updated to CPython3, they will be imported as-is.
 
+Cannot create new python nodes, only existing ones can be updated.
+
 ## Development
 
 ### Installation
@@ -166,7 +188,7 @@ With venv:
 ```
 git clone https://github.com/infeeeee/dyn2py
 cd dyn2py
-venv .venv
+python -m venv .venv
 . ./.venv/bin/activate
 pip install -e .
 ```
@@ -204,7 +226,7 @@ python -m unittest discover -v -s ./tests -p "test_*.py"
 ### New release
 
 1. Update version number in `pyproject.toml`
-2. Create a publish a git tag with that number
+2. Create and publish a git tag with that number
 
 ## License
 
