@@ -43,7 +43,7 @@ class TestDynamoFile(unittest.TestCase):
             dyn.get_python_node_by_id("wrongid")
 
     def test_extract_python(self):
-        cleanup_output_dir()
+        cleanup_dirs()
         dyn2py.PythonFile.open_files.clear()
 
         opt = dyn2py.Options(python_folder=OUTPUT_DIR)
@@ -69,7 +69,7 @@ class TestDynamoFile(unittest.TestCase):
                          dyn2py.DynamoFile.get_open_file_by_uuid("76de5c79-17c5-4c74-9f90-ad99a213d339"))
 
     def test_get_related_python_files(self):
-        cleanup_output_dir()
+        cleanup_dirs()
 
         opt = dyn2py.Options(python_folder=OUTPUT_DIR)
         dyn1 = dyn2py.DynamoFile(f"{INPUT_DIR}/python_nodes.dyn")
@@ -91,7 +91,7 @@ class TestDynamoFile(unittest.TestCase):
         self.assertFalse(no_python_files)
 
     def test_write_same(self):
-        cleanup_output_dir()
+        cleanup_dirs()
 
         shutil.copy(f"{INPUT_DIR}/python_nodes.dyn",
                     f"{OUTPUT_DIR}/python_nodes.dyn")

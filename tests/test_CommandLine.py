@@ -36,8 +36,12 @@ class TestCommandLine(unittest.TestCase):
             self.assertFalse(p.stderr)
 
     dyn_sources = [
-        {"filename": "python_nodes.dyn", "py_file_count": 6},
-        {"filename": "single_node.dyn", "py_file_count": 1}
+        {"filename": "python_nodes.dyn", "output_file_count": 6},
+        {"filename": "single_node.dyn", "output_file_count": 1}
+    ]
+
+    py_sources = [
+        {"filename": "single_node_mod.py"},
     ]
 
     dyn_sources_error = ["dynamo1file.dyn",
@@ -85,7 +89,7 @@ class TestCommandLine(unittest.TestCase):
 
                         test_dicts[0]["filenames"] = [
                             test_dicts[0]["filename"]]
-                        if i == 0:
+                        if i == 0 and len(source_dict) > 1:
                             # Create a multi file version on the first file:
                             d = {}
                             for key in source_dict:
@@ -100,7 +104,7 @@ class TestCommandLine(unittest.TestCase):
                         for test_dict in test_dicts:
 
                             if pfolder_option:
-                                file_dir = INPUT_DIR
+                                file_dir = TEMP_DIR
                                 pfolder_arg = f"{pfolder_option} {OUTPUT_DIR}"
                             else:
                                 file_dir = OUTPUT_DIR
@@ -122,7 +126,7 @@ class TestCommandLine(unittest.TestCase):
     def test_dyn_error(self):
         for s in self.dyn_sources_error:
 
-            cleanup_output_dir()
+            cleanup_dirs()
 
             if pathlib.Path(f"{INPUT_DIR}/{s}").exists():
                 shutil.copy(f"{INPUT_DIR}/{s}",
@@ -140,12 +144,19 @@ class TestCommandLine(unittest.TestCase):
         dyn_tests = self.generate_test_args(self.dyn_sources)
 
         for s in dyn_tests:
-            cleanup_output_dir()
+            cleanup_dirs()
 
+            # if no pythonfolder, everything should be in output ddir
             if not s["pfolder_arg"]:
-                for filename in s["filenames"]:
-                    shutil.copy(f"{INPUT_DIR}/{filename}",
-                                f"{OUTPUT_DIR}/{filename}")
+                source_dir = OUTPUT_DIR
+            else:
+                source_dir = TEMP_DIR
+
+            # copy  source files:
+            for filename in s["filenames"]:
+                shutil.copy(f"{INPUT_DIR}/{filename}",
+                            f"{source_dir}/{filename}")
+            
 
             # Open files normally
             file_open = self.run_command(
@@ -155,7 +166,7 @@ class TestCommandLine(unittest.TestCase):
             self.assertFalse(
                 bool(file_open["stderr"]), msg=file_open["stderr"])
             self.assertEqual(
-                len(file_open["python_file_mtimes"]), s["py_file_count"])
+                len(file_open["python_file_mtimes"]), s["output_file_count"])
 
             # Test no overwrite
             file_no_overwrite = self.run_command(
@@ -164,7 +175,7 @@ class TestCommandLine(unittest.TestCase):
             # Should give error, because they already exist:
             self.assertTrue(bool(file_no_overwrite["stderr"]))
             self.assertEqual(
-                len(file_no_overwrite["python_file_mtimes"]), s["py_file_count"])
+                len(file_no_overwrite["python_file_mtimes"]), s["output_file_count"])
 
             # The modify time shouldn't change as they were not overwritten:
             for p in file_no_overwrite["python_file_mtimes"]:
@@ -178,9 +189,9 @@ class TestCommandLine(unittest.TestCase):
             # Should not have an error:
             self.assertFalse(bool(file_force["stderr"]))
             self.assertEqual(
-                len(file_force["python_file_mtimes"]), s["py_file_count"])
+                len(file_force["python_file_mtimes"]), s["output_file_count"])
 
-            #Modify time should be higher as they were replaced
+            # Modify time should be higher as they were replaced
             for p in file_force["python_file_mtimes"]:
                 self.assertTrue(
                     file_force["python_file_mtimes"][p] > file_open["python_file_mtimes"][p]
@@ -193,20 +204,52 @@ class TestCommandLine(unittest.TestCase):
             self.assertFalse(bool(file_backup["stderr"]))
 
             self.assertEqual(
-                len(file_backup["python_file_mtimes"]), s["py_file_count"] * 2, 
+                len(file_backup["python_file_mtimes"]
+                    ), s["output_file_count"] * 2,
                 msg=f""
-                )
+            )
 
             for p in file_force["python_file_mtimes"]:
                 self.assertTrue(
                     file_backup["python_file_mtimes"][p] > file_force["python_file_mtimes"][p]
                 )
 
+    # def test_py(self):
+    #     py_tests = self.generate_test_args(self.py_sources)
+
+    #     # TODO add more python files!
+    #     self.assertEqual(len(py_tests), 1)
+
+    #     for s in py_tests:
+    #         cleanup_dirs()
+
+    #         extract_single_node_dyn(modify_py=True)
+
+            
+    #         # if pythonfolder, python should be in the temp folder:
+    #         if s["pfolder_arg"]:
+    #             for filename in s["filenames"]:
+    #                 shutil.move(f"{OUTPUT_DIR}/{filename}",
+    #                             f"{TEMP_DIR}/{filename}")
+
+    #         # Open files normally
+    #         file_open = self.run_command(
+    #             [s["pfolder_arg"], s['filepath']])
+
+
+    #         # Open without error:
+    #         self.assertFalse(
+    #             bool(file_open["stderr"]), msg=file_open["stderr"])
+    #         self.assertEqual(
+    #             len(file_open["python_file_mtimes"]), s["output_file_count"])
+
+                                
+
     def test_single_dyn_dryrun(self):
         for s in self.dyn_sources:
             for arg in ["-n", "--dry-run"]:
 
-                cleanup_output_dir()
+                cleanup_dirs()
 
                 shutil.copy(f"{INPUT_DIR}/{s['filename']}",
                             f"{OUTPUT_DIR}/{s['filename']}")
