@@ -42,11 +42,11 @@ jobs:
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
       - name: Download exe
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: dyn2py.exe
       - name: Download installer
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: dyn2py-installer.exe
       - name: Release
